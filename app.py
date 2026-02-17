@@ -961,44 +961,10 @@ def login():
             session["pending_verify_user_id"] = user.id
             flash("Verify your email first.")
             return redirect(url_for("verify_email"))
-
-        token = issue_otp(user, "LOGIN")
-        sent = send_email(
-            user.email,
-            "Your login OTP",
-            f"Your login OTP is {token.code}. It expires in 10 minutes.",
-            user_id=user.id,
-        )
-        session["pending_login_user_id"] = user.id
-        if sent:
-            flash("OTP sent to email.")
-        else:
-            if mail_config_loaded():
-                flash(f"OTP email failed to send; use OTP: {token.code}")
-            else:
-                flash(f"Mail server not configured; use OTP: {token.code}")
-        return redirect(url_for("verify_login"))
-    return render_template("login.html")
-
-
-@app.route("/auth/verify-login", methods=["GET", "POST"])
-def verify_login():
-    user_id = session.get("pending_login_user_id")
-    if not user_id:
-        flash("No pending login.")
-        return redirect(url_for("login"))
-    user = User.query.get_or_404(user_id)
-    if request.method == "POST":
-        code = request.form["otp"].strip()
-        ok, msg = verify_otp(user, "LOGIN", code)
-        if not ok:
-            flash(msg)
-            return redirect(url_for("verify_login"))
         session["user_id"] = user.id
-        session.pop("pending_login_user_id", None)
         flash("Logged in successfully.")
         return redirect(url_for("dashboard"))
-    return render_template("verify_email.html", email=user.email, purpose="Login OTP")
+    return render_template("login.html")
 
 
 @app.route("/auth/logout")

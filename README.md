@@ -10,7 +10,8 @@ Placement portal for on-campus drives with:
 - Student eligibility locking (`ELIGIBLE`, `EXTERNAL_INTERN`, `CAMPUS_INTERN`, `EXTERNAL_PLACED`, `BLOCKED_BY_POLICY`)
 - Company selection policy (`BLOCKING` / `NON_BLOCKING`)
 - Login with role-based access (`ADMIN`, `PLACEMENT_COORDINATOR`, `STUDENT`)
-- OTP-based email verification + OTP-based login
+- OTP-based email verification
+- Email + password login (no OTP at login)
 - Email notification on application status changes
 - Production-ready deployment setup (Postgres + Gunicorn + Docker + Render/Railway configs)
 
