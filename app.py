@@ -207,6 +207,7 @@ class NotificationLog(db.Model):
     subject = db.Column(db.String(255), nullable=False)
     body = db.Column(db.Text, nullable=False)
     status = db.Column(db.String(32), nullable=False, default="PENDING")
+    error_message = db.Column(db.String(1024), nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
 
     user = db.relationship("User")
@@ -286,10 +287,15 @@ def send_email(to_email: str, subject: str, body: str, user_id=None) -> bool:
                 smtp.login(username, password or "")
             smtp.send_message(msg)
         log.status = "SENT"
-    except Exception:
+    except Exception as exc:
         log.status = "FAILED"
+        log.error_message = str(exc)[:1024]
     db.session.commit()
     return log.status == "SENT"
+
+
+def mail_config_loaded():
+    return bool(app.config.get("MAIL_SERVER"))
 
 
 def issue_otp(user: User, purpose: str) -> OTPToken:
@@ -892,7 +898,10 @@ def register():
         if sent:
             flash("Account created. OTP sent to email for verification.")
         else:
-            flash(f"Account created. Email not sent (mail not configured). OTP: {token.code}")
+            if mail_config_loaded():
+                flash(f"Account created, but OTP email failed to send. OTP: {token.code}")
+            else:
+                flash(f"Account created. Mail server not configured. OTP: {token.code}")
         return redirect(url_for("verify_email"))
 
     return render_template("register.html")
@@ -944,7 +953,10 @@ def login():
         if sent:
             flash("OTP sent to email.")
         else:
-            flash(f"Mail not configured; use OTP: {token.code}")
+            if mail_config_loaded():
+                flash(f"OTP email failed to send; use OTP: {token.code}")
+            else:
+                flash(f"Mail server not configured; use OTP: {token.code}")
         return redirect(url_for("verify_login"))
     return render_template("login.html")
 
@@ -997,6 +1009,31 @@ def admin_users():
         return redirect(url_for("admin_users"))
     users = User.query.order_by(User.created_at.desc()).all()
     return render_template("admin_users.html", users=users)
+
+
+@app.route("/admin/mail-debug")
+@role_required("ADMIN")
+def admin_mail_debug():
+    latest = NotificationLog.query.order_by(NotificationLog.created_at.desc()).limit(10).all()
+    return {
+        "mail_server_loaded": bool(app.config.get("MAIL_SERVER")),
+        "mail_username_loaded": bool(app.config.get("MAIL_USERNAME")),
+        "mail_password_loaded": bool(app.config.get("MAIL_PASSWORD")),
+        "mail_from_loaded": bool(app.config.get("MAIL_FROM")),
+        "mail_port": app.config.get("MAIL_PORT"),
+        "mail_use_tls": app.config.get("MAIL_USE_TLS"),
+        "recent_notification_statuses": [
+            {
+                "id": row.id,
+                "email": row.email,
+                "subject": row.subject,
+                "status": row.status,
+                "error_message": row.error_message,
+                "created_at": row.created_at.isoformat(),
+            }
+            for row in latest
+        ],
+    }, 200
 
 
 @app.route("/healthz")
@@ -1063,6 +1100,11 @@ def ensure_schema_updates():
         db.session.execute(
             text("ALTER TABLE company ADD COLUMN selection_policy VARCHAR(32) DEFAULT 'NON_BLOCKING'")
         )
+        db.session.commit()
+
+    notif_cols = {col["name"] for col in inspector.get_columns("notification_log")}
+    if "error_message" not in notif_cols:
+        db.session.execute(text("ALTER TABLE notification_log ADD COLUMN error_message VARCHAR(1024)"))
         db.session.commit()
 
 
