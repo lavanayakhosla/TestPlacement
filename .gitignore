@@ -1,6 +1,32 @@
+# Python
 .venv/
 __pycache__/
 *.pyc
-placement.db
-uploads/
+*.pyo
+*.pyd
+.pytest_cache/
+.mypy_cache/
+
+# Local env/secrets
 .env
+.env.*
+!.env.example
+
+# Local databases
+*.db
+*.sqlite
+*.sqlite3
+
+# Local uploads/data
+uploads/
+
+# OS/editor noise
+.DS_Store
+.vscode/
+.idea/
+
+# Build/log artifacts
+*.log
+dist/
+build/
+

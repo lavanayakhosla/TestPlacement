@@ -23,30 +23,59 @@ from flask import (
     url_for,
 )
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import inspect, text
 from werkzeug.security import check_password_hash, generate_password_hash
 from werkzeug.utils import secure_filename
 
 BASE_DIR = Path(__file__).resolve().parent
-UPLOAD_DIR = BASE_DIR / "uploads"
-RESUME_DIR = UPLOAD_DIR / "resumes"
+UPLOAD_ROOT = os.environ.get("UPLOAD_DIR", str(BASE_DIR / "uploads"))
+UPLOAD_DIR = Path(UPLOAD_ROOT)
 PDF_IMPORT_DIR = UPLOAD_DIR / "pdf_imports"
 
-for folder in (UPLOAD_DIR, RESUME_DIR, PDF_IMPORT_DIR):
+for folder in (UPLOAD_DIR, PDF_IMPORT_DIR):
     folder.mkdir(parents=True, exist_ok=True)
 
 app = Flask(__name__)
-app.config["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///{BASE_DIR / 'placement.db'}"
+
+
+def build_database_uri():
+    raw = os.environ.get("DATABASE_URL")
+    if raw:
+        # Heroku/Render style legacy postgres:// URL compatibility
+        if raw.startswith("postgres://"):
+            raw = raw.replace("postgres://", "postgresql://", 1)
+        return raw
+    return f"sqlite:///{BASE_DIR / 'placement.db'}"
+
+
+app.config["SQLALCHEMY_DATABASE_URI"] = build_database_uri()
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "dev-secret-key")
+app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "dev-secret-key-change-me")
 app.config["MAX_CONTENT_LENGTH"] = 20 * 1024 * 1024
+app.config["ENVIRONMENT"] = os.environ.get("ENVIRONMENT", "development")
 app.config["MAIL_SERVER"] = os.environ.get("MAIL_SERVER")
 app.config["MAIL_PORT"] = int(os.environ.get("MAIL_PORT", "587"))
 app.config["MAIL_USERNAME"] = os.environ.get("MAIL_USERNAME")
 app.config["MAIL_PASSWORD"] = os.environ.get("MAIL_PASSWORD")
 app.config["MAIL_USE_TLS"] = os.environ.get("MAIL_USE_TLS", "true").lower() == "true"
 app.config["MAIL_FROM"] = os.environ.get("MAIL_FROM", "no-reply@placement-portal.local")
+app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {"pool_pre_ping": True}
+
+if app.config["ENVIRONMENT"].lower() == "production":
+    app.config["SESSION_COOKIE_SECURE"] = True
+    app.config["SESSION_COOKIE_HTTPONLY"] = True
+    app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
 
 db = SQLAlchemy(app)
+
+ELIGIBILITY_STATUSES = {
+    "ELIGIBLE",
+    "EXTERNAL_INTERN",
+    "CAMPUS_INTERN",
+    "EXTERNAL_PLACED",
+    "BLOCKED_BY_POLICY",
+}
+SELECTION_POLICIES = {"BLOCKING", "NON_BLOCKING"}
 
 
 class Student(db.Model):
@@ -58,22 +87,17 @@ class Student(db.Model):
     current_semester = db.Column(db.Integer, default=1, nullable=False)
     cgpa = db.Column(db.Float, default=0.0, nullable=False)
     total_backlogs = db.Column(db.Integer, default=0, nullable=False)
+    resume_link = db.Column(db.String(1024), nullable=True)
+    eligibility_status = db.Column(db.String(32), default="ELIGIBLE", nullable=False, index=True)
+    block_reason = db.Column(db.String(255), nullable=True)
+    blocked_by_company_id = db.Column(db.Integer, db.ForeignKey("company.id"), nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
 
     semester_records = db.relationship(
         "SemesterPerformance", backref="student", lazy=True, cascade="all, delete-orphan"
     )
-    resume_versions = db.relationship(
-        "ResumeVersion", backref="student", lazy=True, cascade="all, delete-orphan"
-    )
     applications = db.relationship("Application", backref="student", lazy=True)
-
-    def active_resume(self):
-        return (
-            ResumeVersion.query.filter_by(student_id=self.id, is_active=True)
-            .order_by(ResumeVersion.uploaded_at.desc())
-            .first()
-        )
+    blocked_by_company = db.relationship("Company", foreign_keys=[blocked_by_company_id], lazy=True)
 
 
 class SemesterPerformance(db.Model):
@@ -102,24 +126,13 @@ class BacklogUpdate(db.Model):
     student = db.relationship("Student")
 
 
-class ResumeVersion(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    student_id = db.Column(db.Integer, db.ForeignKey("student.id"), nullable=False, index=True)
-    file_path = db.Column(db.String(255), nullable=False)
-    uploaded_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
-    is_active = db.Column(db.Boolean, default=True, nullable=False)
-
-    @property
-    def filename(self):
-        return Path(self.file_path).name
-
-
 class Company(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(120), unique=True, nullable=False)
     eligible_branches = db.Column(db.String(255), nullable=False, default="ALL")
     min_cgpa = db.Column(db.Float, default=0.0, nullable=False)
     max_backlogs = db.Column(db.Integer, default=999, nullable=False)
+    selection_policy = db.Column(db.String(32), default="NON_BLOCKING", nullable=False)
     export_template_json = db.Column(db.Text, nullable=False, default="[]")
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     applications = db.relationship("Application", backref="company", lazy=True)
@@ -147,9 +160,6 @@ class Application(db.Model):
     status = db.Column(db.String(32), default="APPLIED", nullable=False)
     applied_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     exported_at = db.Column(db.DateTime, nullable=True)
-    resume_version_id = db.Column(db.Integer, db.ForeignKey("resume_version.id"), nullable=True)
-
-    resume_version = db.relationship("ResumeVersion", foreign_keys=[resume_version_id])
 
     __table_args__ = (
         db.UniqueConstraint("student_id", "company_id", name="uniq_student_company"),
@@ -394,6 +404,17 @@ def parse_pdf_rows(pdf_path: Path):
 
 
 def allowed_for_company(student: Student, company: Company):
+    if student.eligibility_status == "EXTERNAL_PLACED":
+        return False, "Student is marked as already placed externally."
+    if student.eligibility_status == "EXTERNAL_INTERN":
+        return False, "Student is marked as already interned externally."
+    if student.eligibility_status == "CAMPUS_INTERN":
+        return False, "Student is marked as already interned via campus placement."
+    if student.eligibility_status == "BLOCKED_BY_POLICY":
+        by = student.blocked_by_company.name if student.blocked_by_company else "policy"
+        reason = student.block_reason or f"Blocked after selection in {by}."
+        return False, reason
+
     branches = company.branch_list()
     if "ALL" not in branches and student.branch.upper() not in branches:
         return False, f"{student.branch} is not eligible for {company.name}"
@@ -404,9 +425,31 @@ def allowed_for_company(student: Student, company: Company):
     return True, "Eligible"
 
 
+def recompute_blocking_status(student: Student):
+    selected_blocking = (
+        db.session.query(Application)
+        .join(Company, Application.company_id == Company.id)
+        .filter(
+            Application.student_id == student.id,
+            Application.status == "SELECTED",
+            Company.selection_policy == "BLOCKING",
+        )
+        .order_by(Application.applied_at.desc())
+        .first()
+    )
+    if selected_blocking:
+        student.eligibility_status = "BLOCKED_BY_POLICY"
+        student.blocked_by_company_id = selected_blocking.company_id
+        student.block_reason = f"Selected in blocking company: {selected_blocking.company.name}"
+    else:
+        if student.eligibility_status == "BLOCKED_BY_POLICY":
+            student.eligibility_status = "ELIGIBLE"
+            student.blocked_by_company_id = None
+            student.block_reason = None
+
+
 def resolve_source(source: str, application: Application):
     student = application.student
-    resume = application.resume_version or student.active_resume()
     mapping = {
         "student.roll_no": student.roll_no,
         "student.name": student.name,
@@ -414,11 +457,14 @@ def resolve_source(source: str, application: Application):
         "student.cgpa": student.cgpa,
         "student.backlogs": student.total_backlogs,
         "student.lateral_entry": "YES" if student.is_lateral_entry else "NO",
+        "student.resume_link": student.resume_link or "",
+        "student.eligibility_status": student.eligibility_status,
         "application.status": application.status,
         "application.applied_at": application.applied_at.strftime("%Y-%m-%d %H:%M:%S"),
         "company.name": application.company.name,
-        "resume.filename": resume.filename if resume else "",
-        "resume.path": resume.file_path if resume else "",
+        "resume.link": student.resume_link or "",
+        "resume.path": student.resume_link or "",
+        "resume.filename": student.resume_link or "",
     }
     return mapping.get(source, "")
 
@@ -447,12 +493,19 @@ def dashboard():
 @role_required("ADMIN", "PLACEMENT_COORDINATOR")
 def students():
     if request.method == "POST":
+        eligibility_status = request.form.get("eligibility_status", "ELIGIBLE").strip().upper()
+        if eligibility_status not in ELIGIBILITY_STATUSES:
+            flash("Invalid eligibility status.")
+            return redirect(url_for("students"))
         student = Student(
             roll_no=request.form["roll_no"].strip().upper(),
             name=request.form["name"].strip(),
             branch=request.form["branch"].strip().upper(),
             is_lateral_entry=request.form.get("is_lateral_entry") == "on",
             current_semester=int(request.form.get("current_semester", "1")),
+            resume_link=request.form.get("resume_link", "").strip() or None,
+            eligibility_status=eligibility_status,
+            block_reason=request.form.get("block_reason", "").strip() or None,
         )
         db.session.add(student)
         db.session.commit()
@@ -462,28 +515,20 @@ def students():
     return render_template("students.html", students=records)
 
 
-@app.route("/students/<int:student_id>/resume", methods=["POST"])
+@app.route("/students/<int:student_id>/resume-link", methods=["POST"])
 @role_required("ADMIN", "PLACEMENT_COORDINATOR", "STUDENT")
-def upload_resume(student_id: int):
+def update_resume_link(student_id: int):
     if g.user.role == "STUDENT" and g.user.student_id != student_id:
-        flash("You can upload resume only for your own profile.")
+        flash("You can update resume link only for your own profile.")
         return redirect(url_for("dashboard"))
     student = Student.query.get_or_404(student_id)
-    file = request.files.get("resume")
-    if not file or not file.filename:
-        flash("Resume file is required.")
+    link = request.form.get("resume_link", "").strip()
+    if not link:
+        flash("Resume link is required.")
         return redirect(url_for("students"))
-
-    filename = secure_filename(file.filename)
-    stored_name = f"{student.roll_no}_{datetime.utcnow().strftime('%Y%m%d%H%M%S')}_{filename}"
-    dest = RESUME_DIR / stored_name
-    file.save(dest)
-
-    ResumeVersion.query.filter_by(student_id=student.id, is_active=True).update({"is_active": False})
-    rv = ResumeVersion(student_id=student.id, file_path=str(dest), is_active=True)
-    db.session.add(rv)
+    student.resume_link = link
     db.session.commit()
-    flash("Resume uploaded. This version is now active.")
+    flash("Resume link updated.")
     return redirect(url_for("students"))
 
 
@@ -491,6 +536,10 @@ def upload_resume(student_id: int):
 @role_required("ADMIN", "PLACEMENT_COORDINATOR")
 def companies():
     if request.method == "POST":
+        selection_policy = request.form.get("selection_policy", "NON_BLOCKING").strip().upper()
+        if selection_policy not in SELECTION_POLICIES:
+            flash("Invalid company selection policy.")
+            return redirect(url_for("companies"))
         template_text = request.form.get("export_template_json", "[]").strip() or "[]"
         try:
             parsed = json.loads(template_text)
@@ -505,6 +554,7 @@ def companies():
             eligible_branches=request.form.get("eligible_branches", "ALL").strip().upper() or "ALL",
             min_cgpa=float(request.form.get("min_cgpa", "0")),
             max_backlogs=int(request.form.get("max_backlogs", "999")),
+            selection_policy=selection_policy,
             export_template_json=template_text,
         )
         db.session.add(company)
@@ -538,28 +588,13 @@ def applications():
             flash("Student already applied to this company.")
             return redirect(url_for("applications"))
 
-        uploaded_file = request.files.get("resume")
-        resume_version = student.active_resume()
-
-        if uploaded_file and uploaded_file.filename:
-            filename = secure_filename(uploaded_file.filename)
-            stored_name = (
-                f"{student.roll_no}_{datetime.utcnow().strftime('%Y%m%d%H%M%S')}_{filename}"
-            )
-            dest = RESUME_DIR / stored_name
-            uploaded_file.save(dest)
-            ResumeVersion.query.filter_by(student_id=student.id, is_active=True).update({"is_active": False})
-            resume_version = ResumeVersion(student_id=student.id, file_path=str(dest), is_active=True)
-            db.session.add(resume_version)
-            db.session.flush()
-        elif not resume_version:
-            flash("No active resume found. Upload one while applying.")
+        if not student.resume_link:
+            flash("No resume link found for this student. Add resume link first.")
             return redirect(url_for("applications"))
 
         app_entry = Application(
             student_id=student.id,
             company_id=company.id,
-            resume_version_id=resume_version.id if resume_version else None,
         )
         db.session.add(app_entry)
         db.session.commit()
@@ -693,6 +728,29 @@ def update_backlog(student_id: int):
     return redirect(url_for("students"))
 
 
+@app.route("/students/<int:student_id>/eligibility-status", methods=["POST"])
+@role_required("ADMIN", "PLACEMENT_COORDINATOR")
+def update_eligibility_status(student_id: int):
+    student = Student.query.get_or_404(student_id)
+    status = request.form.get("eligibility_status", "").strip().upper()
+    note = request.form.get("block_reason", "").strip()
+    if status not in ELIGIBILITY_STATUSES:
+        flash("Invalid eligibility status.")
+        return redirect(url_for("students"))
+
+    student.eligibility_status = status
+    if status == "BLOCKED_BY_POLICY":
+        student.block_reason = note or "Manually blocked by placement policy."
+    else:
+        student.block_reason = note or None
+        if status != "BLOCKED_BY_POLICY":
+            student.blocked_by_company_id = None
+
+    db.session.commit()
+    flash("Eligibility status updated.")
+    return redirect(url_for("students"))
+
+
 @app.route("/exports/company/<int:company_id>.xlsx")
 @role_required("ADMIN", "PLACEMENT_COORDINATOR")
 def export_company(company_id: int):
@@ -755,6 +813,7 @@ def update_application_status(application_id: int):
         return redirect(url_for("applications"))
 
     app_entry.status = status
+    recompute_blocking_status(app_entry.student)
     student_user = User.query.filter_by(student_id=app_entry.student_id, role="STUDENT").first()
     db.session.commit()
 
@@ -940,6 +999,11 @@ def admin_users():
     return render_template("admin_users.html", users=users)
 
 
+@app.route("/healthz")
+def healthz():
+    return {"status": "ok"}, 200
+
+
 @app.cli.command("init-db")
 def init_db():
     db.create_all()
@@ -951,14 +1015,65 @@ def ensure_default_admin():
     existing = User.query.filter_by(role="ADMIN").first()
     if existing:
         return
-    user = User(email="admin@placement.local", role="ADMIN", is_verified=True)
-    user.set_password("admin123")
+
+    admin_email = os.environ.get("DEFAULT_ADMIN_EMAIL")
+    admin_password = os.environ.get("DEFAULT_ADMIN_PASSWORD")
+
+    if not admin_email or not admin_password:
+        # Safe local fallback only when explicitly in non-production mode.
+        if app.config["ENVIRONMENT"].lower() != "production":
+            admin_email = "admin@placement.local"
+            admin_password = "admin123"
+        else:
+            return
+
+    user = User(email=admin_email.strip().lower(), role="ADMIN", is_verified=True)
+    user.set_password(admin_password)
     db.session.add(user)
     db.session.commit()
 
 
+def bootstrap_database():
+    db.create_all()
+    ensure_schema_updates()
+    ensure_default_admin()
+
+
+def ensure_schema_updates():
+    # Lightweight compatibility migration for older databases.
+    inspector = inspect(db.engine)
+    student_cols = {col["name"] for col in inspector.get_columns("student")}
+    if "resume_link" not in student_cols:
+        db.session.execute(text("ALTER TABLE student ADD COLUMN resume_link VARCHAR(1024)"))
+        db.session.commit()
+    if "eligibility_status" not in student_cols:
+        db.session.execute(
+            text("ALTER TABLE student ADD COLUMN eligibility_status VARCHAR(32) DEFAULT 'ELIGIBLE'")
+        )
+        db.session.commit()
+    if "block_reason" not in student_cols:
+        db.session.execute(text("ALTER TABLE student ADD COLUMN block_reason VARCHAR(255)"))
+        db.session.commit()
+    if "blocked_by_company_id" not in student_cols:
+        db.session.execute(text("ALTER TABLE student ADD COLUMN blocked_by_company_id INTEGER"))
+        db.session.commit()
+
+    company_cols = {col["name"] for col in inspector.get_columns("company")}
+    if "selection_policy" not in company_cols:
+        db.session.execute(
+            text("ALTER TABLE company ADD COLUMN selection_policy VARCHAR(32) DEFAULT 'NON_BLOCKING'")
+        )
+        db.session.commit()
+
+
+if os.environ.get("AUTO_INIT_DB", "true").lower() == "true":
+    with app.app_context():
+        bootstrap_database()
+
+
 if __name__ == "__main__":
     with app.app_context():
-        db.create_all()
-        ensure_default_admin()
-    app.run(debug=True)
+        bootstrap_database()
+    port = int(os.environ.get("PORT", "5000"))
+    debug = os.environ.get("FLASK_DEBUG", "false").lower() == "true"
+    app.run(host="0.0.0.0", port=port, debug=debug)

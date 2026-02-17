@@ -9,13 +9,18 @@
       <input name="eligible_branches" placeholder="Eligible branches (CSE,ECE) or ALL" value="ALL">
       <input type="number" name="min_cgpa" step="0.01" min="0" max="10" value="0">
       <input type="number" name="max_backlogs" min="0" value="999">
+      <label>Selection Policy</label>
+      <select name="selection_policy">
+        <option value="NON_BLOCKING">NON_BLOCKING (student can apply elsewhere)</option>
+        <option value="BLOCKING">BLOCKING (selection blocks further applications)</option>
+      </select>
       <textarea name="export_template_json" rows="10">[
   {"header":"Roll Number","source":"student.roll_no"},
   {"header":"Name","source":"student.name"},
   {"header":"Branch","source":"student.branch"},
   {"header":"CGPA","source":"student.cgpa"},
   {"header":"Backlogs","source":"student.backlogs"},
-  {"header":"Resume","source":"resume.filename"},
+  {"header":"Resume Link","source":"student.resume_link"},
   {"header":"Applied On","source":"application.applied_at"}
 ]</textarea>
       <button type="submit">Add Company</button>
@@ -24,8 +29,8 @@
 
   <div class="card">
     <h3>Available Template Sources</h3>
-    <p><code>student.roll_no</code>, <code>student.name</code>, <code>student.branch</code>, <code>student.cgpa</code>, <code>student.backlogs</code>, <code>student.lateral_entry</code></p>
-    <p><code>application.status</code>, <code>application.applied_at</code>, <code>company.name</code>, <code>resume.filename</code>, <code>resume.path</code></p>
+    <p><code>student.roll_no</code>, <code>student.name</code>, <code>student.branch</code>, <code>student.cgpa</code>, <code>student.backlogs</code>, <code>student.lateral_entry</code>, <code>student.resume_link</code>, <code>student.eligibility_status</code></p>
+    <p><code>application.status</code>, <code>application.applied_at</code>, <code>company.name</code>, <code>resume.link</code></p>
   </div>
 </div>
 
@@ -37,6 +42,7 @@
       <th>Branches</th>
       <th>Min CGPA</th>
       <th>Max Backlogs</th>
+      <th>Policy</th>
       <th>Export</th>
     </tr>
   </thead>
@@ -47,6 +53,7 @@
       <td>{{ c.eligible_branches }}</td>
       <td>{{ c.min_cgpa }}</td>
       <td>{{ c.max_backlogs }}</td>
+      <td>{{ c.selection_policy }}</td>
       <td><a href="{{ url_for('export_company', company_id=c.id) }}">Download Excel</a></td>
     </tr>
     {% endfor %}

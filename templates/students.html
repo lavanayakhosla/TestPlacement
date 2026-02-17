@@ -9,13 +9,23 @@
       <input name="name" placeholder="Full Name" required>
       <input name="branch" placeholder="Branch (CSE, ECE...)" required>
       <input type="number" name="current_semester" min="1" max="8" value="1" required>
+      <input name="resume_link" placeholder="Resume Link (Drive/Dropbox URL)">
+      <label>Eligibility Status</label>
+      <select name="eligibility_status">
+        <option value="ELIGIBLE">ELIGIBLE</option>
+        <option value="EXTERNAL_INTERN">EXTERNAL_INTERN</option>
+        <option value="CAMPUS_INTERN">CAMPUS_INTERN</option>
+        <option value="EXTERNAL_PLACED">EXTERNAL_PLACED</option>
+        <option value="BLOCKED_BY_POLICY">BLOCKED_BY_POLICY</option>
+      </select>
+      <input name="block_reason" placeholder="Block note (optional)">
       <label><input type="checkbox" name="is_lateral_entry"> Lateral Entry (starts from semester 3)</label>
       <button type="submit">Add Student</button>
     </form>
   </div>
   <div class="card">
-    <h3>How Resume Fallback Works</h3>
-    <p>When applying, if no new resume is uploaded, system automatically uses the student's last active resume.</p>
+    <h3>Resume Link Mode</h3>
+    <p>Store resume as URL (Google Drive/OneDrive/etc). Export will include this link per student.</p>
   </div>
 </div>
 
@@ -30,8 +40,10 @@
       <th>Sem</th>
       <th>CGPA</th>
       <th>Backlogs</th>
-      <th>Resume</th>
-      <th>Upload Resume</th>
+      <th>Eligibility</th>
+      <th>Resume Link</th>
+      <th>Update Resume Link</th>
+      <th>Update Eligibility</th>
       <th>Update Backlog</th>
     </tr>
   </thead>
@@ -45,17 +57,25 @@
       <td>{{ s.current_semester }}</td>
       <td>{{ s.cgpa }}</td>
       <td>{{ s.total_backlogs }}</td>
+      <td>{{ s.eligibility_status }}{% if s.block_reason %}<br><small>{{ s.block_reason }}</small>{% endif %}</td>
+      <td>{{ s.resume_link or "Not set" }}</td>
       <td>
-        {% if s.active_resume() %}
-          <span class="pill">{{ s.active_resume().filename }}</span>
-        {% else %}
-          No Resume
-        {% endif %}
+        <form action="{{ url_for('update_resume_link', student_id=s.id) }}" method="post">
+          <input name="resume_link" placeholder="https://..." required>
+          <button type="submit">Save Link</button>
+        </form>
       </td>
       <td>
-        <form action="{{ url_for('upload_resume', student_id=s.id) }}" method="post" enctype="multipart/form-data">
-          <input type="file" name="resume" accept=".pdf,.doc,.docx" required>
-          <button type="submit">Upload</button>
+        <form action="{{ url_for('update_eligibility_status', student_id=s.id) }}" method="post">
+          <select name="eligibility_status" required>
+            <option value="ELIGIBLE">ELIGIBLE</option>
+            <option value="EXTERNAL_INTERN">EXTERNAL_INTERN</option>
+            <option value="CAMPUS_INTERN">CAMPUS_INTERN</option>
+            <option value="EXTERNAL_PLACED">EXTERNAL_PLACED</option>
+            <option value="BLOCKED_BY_POLICY">BLOCKED_BY_POLICY</option>
+          </select>
+          <input name="block_reason" placeholder="Reason (optional)">
+          <button type="submit">Update</button>
         </form>
       </td>
       <td>

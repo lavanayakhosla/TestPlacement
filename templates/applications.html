@@ -4,7 +4,7 @@
 <div class="grid grid-2">
   <div class="card">
     <h3>Apply to Company</h3>
-    <form method="post" enctype="multipart/form-data">
+    <form method="post">
       {% if g.user.role != "STUDENT" %}
         <label>Student</label>
         <select name="student_id" required>
@@ -27,8 +27,6 @@
         <option value="{{ c.id }}">{{ c.name }}</option>
         {% endfor %}
       </select>
-      <label>New Resume (optional)</label>
-      <input type="file" name="resume" accept=".pdf,.doc,.docx">
       <button type="submit">Submit Application</button>
     </form>
   </div>
@@ -45,8 +43,9 @@
       <th>Applied At</th>
       <th>Student</th>
       <th>Company</th>
+      <th>Company Policy</th>
       <th>Status</th>
-      <th>Resume Used</th>
+      <th>Resume Link</th>
       <th>Exported At</th>
       {% if g.user.role in ["ADMIN", "PLACEMENT_COORDINATOR"] %}
       <th>Update Status</th>
@@ -59,8 +58,9 @@
       <td>{{ a.applied_at.strftime('%Y-%m-%d %H:%M') }}</td>
       <td>{{ a.student.roll_no }} - {{ a.student.name }}</td>
       <td>{{ a.company.name }}</td>
+      <td>{{ a.company.selection_policy }}</td>
       <td>{{ a.status }}</td>
-      <td>{{ a.resume_version.filename if a.resume_version else "N/A" }}</td>
+      <td>{{ a.student.resume_link or "Not set" }}</td>
       <td>{{ a.exported_at.strftime('%Y-%m-%d %H:%M') if a.exported_at else "-" }}</td>
       {% if g.user.role in ["ADMIN", "PLACEMENT_COORDINATOR"] %}
       <td>
