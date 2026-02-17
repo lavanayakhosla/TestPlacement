@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>{{ purpose }}</h1>
+<div class="card" style="max-width: 420px;">
+  <p>OTP sent to <b>{{ email }}</b>.</p>
+  <form method="post">
+    <input name="otp" placeholder="6-digit OTP" minlength="6" maxlength="6" required>
+    <button type="submit">Verify OTP</button>
+  </form>
+</div>
+{% endblock %}

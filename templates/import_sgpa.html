@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Import SGPA From Semester PDF</h1>
+<div class="card">
+  <form method="post" enctype="multipart/form-data">
+    <input type="number" name="semester_no" min="1" max="8" placeholder="Semester Number" required>
+    <input type="number" name="semester_credits" step="0.5" min="0.5" placeholder="Semester Credits (e.g. 22)" required>
+    <input name="branch" placeholder="Branch (CSE, ECE...)" required>
+    <input type="file" name="pdf_file" accept=".pdf" required>
+    <button type="submit">Import PDF</button>
+  </form>
+  <p>Expected PDF table columns: Roll/Enrollment, SGPA, optional Name and Backlog.</p>
+  <p>For lateral-entry students (<code>is_lateral_entry = true</code>), semester 1-2 imports are skipped.</p>
+</div>
+{% endblock %}

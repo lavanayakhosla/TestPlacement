@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Campus Placement Portal</h1>
+<div class="grid grid-2">
+  <div class="card">
+    <h3>Students</h3>
+    <p><b>{{ student_count }}</b> registered</p>
+  </div>
+  <div class="card">
+    <h3>Companies</h3>
+    <p><b>{{ company_count }}</b> configured</p>
+  </div>
+  <div class="card">
+    <h3>Applications</h3>
+    <p><b>{{ application_count }}</b> submitted</p>
+  </div>
+  <div class="card">
+    <h3>What This Supports</h3>
+    <ul>
+      <li>Company-wise custom Excel export format</li>
+      <li>Semester PDF SGPA import with lateral student handling</li>
+      <li>Resume versioning with automatic fallback to last resume</li>
+      <li>Backlog update log and automatic CGPA/backlog recalculation</li>
+    </ul>
+  </div>
+</div>
+{% endblock %}

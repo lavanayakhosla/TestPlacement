@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Companies</h1>
+<div class="grid grid-2">
+  <div class="card">
+    <h3>Add Company</h3>
+    <form method="post">
+      <input name="name" placeholder="Company Name" required>
+      <input name="eligible_branches" placeholder="Eligible branches (CSE,ECE) or ALL" value="ALL">
+      <input type="number" name="min_cgpa" step="0.01" min="0" max="10" value="0">
+      <input type="number" name="max_backlogs" min="0" value="999">
+      <textarea name="export_template_json" rows="10">[
+  {"header":"Roll Number","source":"student.roll_no"},
+  {"header":"Name","source":"student.name"},
+  {"header":"Branch","source":"student.branch"},
+  {"header":"CGPA","source":"student.cgpa"},
+  {"header":"Backlogs","source":"student.backlogs"},
+  {"header":"Resume","source":"resume.filename"},
+  {"header":"Applied On","source":"application.applied_at"}
+]</textarea>
+      <button type="submit">Add Company</button>
+    </form>
+  </div>
+
+  <div class="card">
+    <h3>Available Template Sources</h3>
+    <p><code>student.roll_no</code>, <code>student.name</code>, <code>student.branch</code>, <code>student.cgpa</code>, <code>student.backlogs</code>, <code>student.lateral_entry</code></p>
+    <p><code>application.status</code>, <code>application.applied_at</code>, <code>company.name</code>, <code>resume.filename</code>, <code>resume.path</code></p>
+  </div>
+</div>
+
+<h3>Company List</h3>
+<table>
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Branches</th>
+      <th>Min CGPA</th>
+      <th>Max Backlogs</th>
+      <th>Export</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for c in companies %}
+    <tr>
+      <td>{{ c.name }}</td>
+      <td>{{ c.eligible_branches }}</td>
+      <td>{{ c.min_cgpa }}</td>
+      <td>{{ c.max_backlogs }}</td>
+      <td><a href="{{ url_for('export_company', company_id=c.id) }}">Download Excel</a></td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Students</h1>
+<div class="grid grid-2">
+  <div class="card">
+    <h3>Add Student</h3>
+    <form method="post">
+      <input name="roll_no" placeholder="Roll No" required>
+      <input name="name" placeholder="Full Name" required>
+      <input name="branch" placeholder="Branch (CSE, ECE...)" required>
+      <input type="number" name="current_semester" min="1" max="8" value="1" required>
+      <label><input type="checkbox" name="is_lateral_entry"> Lateral Entry (starts from semester 3)</label>
+      <button type="submit">Add Student</button>
+    </form>
+  </div>
+  <div class="card">
+    <h3>How Resume Fallback Works</h3>
+    <p>When applying, if no new resume is uploaded, system automatically uses the student's last active resume.</p>
+  </div>
+</div>
+
+<h3>Student List</h3>
+<table>
+  <thead>
+    <tr>
+      <th>Roll</th>
+      <th>Name</th>
+      <th>Branch</th>
+      <th>Lateral</th>
+      <th>Sem</th>
+      <th>CGPA</th>
+      <th>Backlogs</th>
+      <th>Resume</th>
+      <th>Upload Resume</th>
+      <th>Update Backlog</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for s in students %}
+    <tr>
+      <td>{{ s.roll_no }}</td>
+      <td>{{ s.name }}</td>
+      <td>{{ s.branch }}</td>
+      <td>{{ "Yes" if s.is_lateral_entry else "No" }}</td>
+      <td>{{ s.current_semester }}</td>
+      <td>{{ s.cgpa }}</td>
+      <td>{{ s.total_backlogs }}</td>
+      <td>
+        {% if s.active_resume() %}
+          <span class="pill">{{ s.active_resume().filename }}</span>
+        {% else %}
+          No Resume
+        {% endif %}
+      </td>
+      <td>
+        <form action="{{ url_for('upload_resume', student_id=s.id) }}" method="post" enctype="multipart/form-data">
+          <input type="file" name="resume" accept=".pdf,.doc,.docx" required>
+          <button type="submit">Upload</button>
+        </form>
+      </td>
+      <td>
+        <form action="{{ url_for('update_backlog', student_id=s.id) }}" method="post">
+          <input type="number" name="semester_no" min="1" max="8" placeholder="Semester" required>
+          <input type="number" name="new_backlog" min="0" placeholder="New backlog count" required>
+          <input name="note" placeholder="Reason (optional)">
+          <button type="submit">Update</button>
+        </form>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

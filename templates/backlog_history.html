@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Backlog Update History</h1>
+<table>
+  <thead>
+    <tr>
+      <th>When</th>
+      <th>Roll</th>
+      <th>Name</th>
+      <th>Semester</th>
+      <th>Old</th>
+      <th>New</th>
+      <th>Note</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for u in updates %}
+    <tr>
+      <td>{{ u.updated_at.strftime('%Y-%m-%d %H:%M') }}</td>
+      <td>{{ u.student.roll_no }}</td>
+      <td>{{ u.student.name }}</td>
+      <td>{{ u.semester_no }}</td>
+      <td>{{ u.old_backlog }}</td>
+      <td>{{ u.new_backlog }}</td>
+      <td>{{ u.note or "-" }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

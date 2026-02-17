@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Register</h1>
+<div class="grid grid-2">
+  <div class="card">
+    <h3>Create Account</h3>
+    <form method="post">
+      <input type="email" name="email" placeholder="Email" required>
+      <input type="password" name="password" placeholder="Password (min 8 chars)" required>
+      {% if g.user and g.user.role == "ADMIN" %}
+        <label>Role</label>
+        <select name="role" id="roleSelect" onchange="toggleStudentFields()">
+          <option value="STUDENT">Student</option>
+          <option value="PLACEMENT_COORDINATOR">Placement Coordinator</option>
+          <option value="ADMIN">Admin</option>
+        </select>
+      {% else %}
+        <input type="hidden" name="role" id="roleSelect" value="STUDENT">
+      {% endif %}
+
+      <div id="studentFields">
+        <input name="roll_no" placeholder="Roll No">
+        <input name="name" placeholder="Full Name">
+        <input name="branch" placeholder="Branch (CSE, ECE...)">
+        <label><input type="checkbox" name="is_lateral_entry"> Lateral Entry</label>
+      </div>
+
+      <button type="submit">Create Account</button>
+    </form>
+  </div>
+  <div class="card">
+    <h3>Verification</h3>
+    <p>After registration, OTP is sent to email for account verification.</p>
+  </div>
+</div>
+<script>
+function toggleStudentFields() {
+  const roleElem = document.getElementById("roleSelect");
+  const role = roleElem ? roleElem.value : "STUDENT";
+  const box = document.getElementById("studentFields");
+  box.style.display = role === "STUDENT" ? "block" : "none";
+}
+toggleStudentFields();
+</script>
+{% endblock %}
