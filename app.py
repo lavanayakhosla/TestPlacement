@@ -3,6 +3,7 @@ import json
 import os
 import re
 import smtplib
+import socket
 from datetime import datetime, timedelta
 from email.mime.text import MIMEText
 from functools import wraps
@@ -280,13 +281,32 @@ def send_email(to_email: str, subject: str, body: str, user_id=None) -> bool:
     msg["To"] = to_email
 
     try:
-        with smtplib.SMTP(server, port, timeout=15) as smtp:
-            if use_tls:
-                smtp.starttls()
-            if username:
-                smtp.login(username, password or "")
-            smtp.send_message(msg)
-        log.status = "SENT"
+        # Some hosting environments fail IPv6 routes for SMTP.
+        # Try all resolved addresses and prefer successful IPv4 fallback.
+        send_ok = False
+        last_exc = None
+        addrinfos = socket.getaddrinfo(server, port, proto=socket.IPPROTO_TCP)
+        for family, socktype, proto, _, sockaddr in addrinfos:
+            try:
+                with smtplib.SMTP(timeout=15) as smtp:
+                    smtp.connect(sockaddr[0], sockaddr[1])
+                    if use_tls:
+                        smtp.starttls()
+                    if username:
+                        smtp.login(username, password or "")
+                    smtp.send_message(msg)
+                send_ok = True
+                break
+            except Exception as exc:
+                last_exc = exc
+                continue
+
+        if send_ok:
+            log.status = "SENT"
+            log.error_message = None
+        else:
+            log.status = "FAILED"
+            log.error_message = str(last_exc)[:1024] if last_exc else "Unknown SMTP error"
     except Exception as exc:
         log.status = "FAILED"
         log.error_message = str(exc)[:1024]
