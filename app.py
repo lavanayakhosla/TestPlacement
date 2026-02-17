@@ -61,6 +61,7 @@ app.config["MAIL_PASSWORD"] = os.environ.get("MAIL_PASSWORD")
 app.config["MAIL_USE_TLS"] = os.environ.get("MAIL_USE_TLS", "true").lower() == "true"
 app.config["MAIL_FROM"] = os.environ.get("MAIL_FROM", "no-reply@placement-portal.local")
 app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {"pool_pre_ping": True}
+app.config["PDF_TABLE_FALLBACK"] = os.environ.get("PDF_TABLE_FALLBACK", "false").lower() == "true"
 
 if app.config["ENVIRONMENT"].lower() == "production":
     app.config["SESSION_COOKIE_SECURE"] = True
@@ -375,6 +376,35 @@ def refresh_student_metrics(student: Student) -> None:
 
 
 def parse_pdf_rows(pdf_path: Path):
+    def parse_from_text() -> list[dict]:
+        extracted_text_rows = []
+        line_re = re.compile(
+            r"^\s*\d+\s+([A-Za-z0-9/-]{5,})\s+(.+?)\s+(10(?:\.0+)?|[0-9](?:\.\d{1,2})?)\b"
+        )
+        with pdfplumber.open(str(pdf_path)) as pdf:
+            for page in pdf.pages:
+                text = page.extract_text() or ""
+                if not text:
+                    continue
+                for line in text.splitlines():
+                    line = line.strip()
+                    match = line_re.match(line)
+                    if not match:
+                        continue
+                    roll_no = match.group(1).strip().upper()
+                    name = match.group(2).strip()
+                    sgpa = float(match.group(3))
+                    extracted_text_rows.append(
+                        {"roll_no": roll_no, "name": name, "sgpa": sgpa, "backlog": 0}
+                    )
+        return extracted_text_rows
+
+    fast_rows = parse_from_text()
+    if fast_rows:
+        return fast_rows
+    if not app.config.get("PDF_TABLE_FALLBACK", False):
+        return []
+
     extracted = []
     roll_re = re.compile(r"^[A-Za-z0-9][A-Za-z0-9/-]{4,}$")
     sgpa_re = re.compile(r"^(10(?:\.0+)?|[0-9](?:\.\d{1,2})?)$")
@@ -1085,6 +1115,13 @@ def ensure_schema_updates():
     if "selection_policy" not in company_cols:
         db.session.execute(
             text("ALTER TABLE company ADD COLUMN selection_policy VARCHAR(32) DEFAULT 'NON_BLOCKING'")
+        )
+        db.session.commit()
+
+    sem_perf_cols = {col["name"] for col in inspector.get_columns("semester_performance")}
+    if "semester_credits" not in sem_perf_cols:
+        db.session.execute(
+            text("ALTER TABLE semester_performance ADD COLUMN semester_credits FLOAT DEFAULT 0")
         )
         db.session.commit()
 

@@ -70,6 +70,7 @@ Email (for OTP/notifications):
 Optional:
 - `UPLOAD_DIR` (default `./uploads`)
 - `AUTO_INIT_DB` (default `true`)
+- `PDF_TABLE_FALLBACK` (default `false`; keep false on low-memory hosts)
 
 ## Core Workflows
 1. Add students in `Students`.
