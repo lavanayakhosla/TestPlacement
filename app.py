@@ -581,10 +581,12 @@ def update_resume_link(student_id: int):
     link = request.form.get("resume_link", "").strip()
     if not link:
         flash("Resume link is required.")
-        return redirect(url_for("students"))
+        return redirect(request.referrer or url_for("students"))
     student.resume_link = link
     db.session.commit()
     flash("Resume link updated.")
+    if g.user.role == "STUDENT":
+        return redirect(url_for("profile"))
     return redirect(url_for("students"))
 
 
@@ -620,6 +622,16 @@ def companies():
 
     records = Company.query.order_by(Company.name).all()
     return render_template("companies.html", companies=records)
+
+
+@app.route("/profile")
+@role_required("STUDENT")
+def profile():
+    if not g.user.student_id:
+        flash("No student profile linked to your account.")
+        return redirect(url_for("dashboard"))
+    student = Student.query.get_or_404(g.user.student_id)
+    return render_template("profile.html", student=student)
 
 
 @app.route("/applications", methods=["GET", "POST"])

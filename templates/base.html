@@ -31,6 +31,9 @@
     {% if g.user %}
       <a href="{{ url_for('dashboard') }}">Dashboard</a>
       <a href="{{ url_for('applications') }}">Applications</a>
+      {% if g.user.role == 'STUDENT' %}
+        <a href="{{ url_for('profile') }}">My Profile</a>
+      {% endif %}
       {% if g.user.role in ['ADMIN', 'PLACEMENT_COORDINATOR'] %}
         <a href="{{ url_for('students') }}">Students</a>
         <a href="{{ url_for('companies') }}">Companies</a>

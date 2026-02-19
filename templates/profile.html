@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>My Profile</h1>
+
+{% if student %}
+<div class="grid grid-2">
+  <div class="card">
+    <h3>Student Details</h3>
+    <p><b>Roll No:</b> {{ student.roll_no }}</p>
+    <p><b>Name:</b> {{ student.name }}</p>
+    <p><b>Branch:</b> {{ student.branch }}</p>
+    <p><b>Current Semester:</b> {{ student.current_semester }}</p>
+    <p><b>CGPA:</b> {{ student.cgpa }}</p>
+    <p><b>Total Backlogs:</b> {{ student.total_backlogs }}</p>
+    <p><b>Eligibility Status:</b> {{ student.eligibility_status }}</p>
+  </div>
+  <div class="card">
+    <h3>Resume Link</h3>
+    <p>
+      <b>Current:</b>
+      {% if student.resume_link %}
+        <a href="{{ student.resume_link }}" target="_blank" rel="noopener noreferrer">{{ student.resume_link }}</a>
+      {% else %}
+        Not set
+      {% endif %}
+    </p>
+    <form action="{{ url_for('update_resume_link', student_id=student.id) }}" method="post">
+      <input
+        name="resume_link"
+        placeholder="Resume Link (Google Drive/OneDrive/Dropbox URL)"
+        value="{{ student.resume_link or '' }}"
+        required
+      >
+      <button type="submit">Save Resume Link</button>
+    </form>
+    <p><small>This link will be used automatically whenever you apply to companies.</small></p>
+  </div>
+</div>
+{% else %}
+  <p>No student profile linked to this account.</p>
+{% endif %}
+{% endblock %}
+
