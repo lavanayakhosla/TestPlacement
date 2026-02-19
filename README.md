@@ -10,9 +10,7 @@ Placement portal for on-campus drives with:
 - Student eligibility locking (`ELIGIBLE`, `EXTERNAL_INTERN`, `CAMPUS_INTERN`, `EXTERNAL_PLACED`, `BLOCKED_BY_POLICY`)
 - Company selection policy (`BLOCKING` / `NON_BLOCKING`)
 - Login with role-based access (`ADMIN`, `PLACEMENT_COORDINATOR`, `STUDENT`)
-- OTP-based email verification
 - Email + password login (no OTP at login)
-- Email notification on application status changes
 - Production-ready deployment setup (Postgres + Gunicorn + Docker + Render/Railway configs)
 
 ## Tech Stack
@@ -22,7 +20,7 @@ Placement portal for on-campus drives with:
 
 ## Local Setup
 ```bash
-cd /Users/lavanayakhosla/Documents/New\ project
+cd TestPlacement
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
@@ -38,18 +36,7 @@ App runs at `http://127.0.0.1:5000`.
   - `DEFAULT_ADMIN_EMAIL`
   - `DEFAULT_ADMIN_PASSWORD`
 
-## Email/OTP Configuration
-Set SMTP env vars (example):
-```bash
-export MAIL_SERVER="smtp.gmail.com"
-export MAIL_PORT="587"
-export MAIL_USERNAME="your_email@gmail.com"
-export MAIL_PASSWORD="app_password"
-export MAIL_USE_TLS="true"
-export MAIL_FROM="no-reply@yourcollege.edu"
-```
 
-If SMTP is not configured, OTP will still be generated and shown as flash text for local testing.
 
 ## Production Environment Variables
 Required:
@@ -59,13 +46,6 @@ Required:
 - `DEFAULT_ADMIN_EMAIL`
 - `DEFAULT_ADMIN_PASSWORD`
 
-Email (for OTP/notifications):
-- `MAIL_SERVER`
-- `MAIL_PORT`
-- `MAIL_USERNAME`
-- `MAIL_PASSWORD`
-- `MAIL_USE_TLS`
-- `MAIL_FROM`
 
 Optional:
 - `UPLOAD_DIR` (default `./uploads`)
@@ -117,48 +97,6 @@ Supported `source` keys:
 - For lateral-entry students, semesters `< 3` are ignored in CGPA and import.
 - Backlog total is recalculated after SGPA import and backlog updates.
 
-## Deploy With Render
-1. Push repository to GitHub.
-2. In Render, create a new Blueprint using `/Users/lavanayakhosla/Documents/New project/render.yaml`.
-3. Set secret env vars:
-   - `DEFAULT_ADMIN_EMAIL`
-   - `DEFAULT_ADMIN_PASSWORD`
-   - `MAIL_*` values
-4. Deploy. Render will provision Postgres and connect `DATABASE_URL` automatically.
-
-## Deploy With Railway
-1. Push repository to GitHub.
-2. Create Railway project from repo (it will use `railway.json` start command).
-3. Add Postgres plugin and set `DATABASE_URL` env var from plugin connection string.
-4. Add env vars:
-   - `ENVIRONMENT=production`
-   - `SECRET_KEY`
-   - `DEFAULT_ADMIN_EMAIL`
-   - `DEFAULT_ADMIN_PASSWORD`
-   - `MAIL_*` values
-5. Deploy and verify `/healthz`.
-
-## Deploy With Docker
-Build:
-```bash
-docker build -t placement-portal .
-```
-Run:
-```bash
-docker run -p 8000:8000 \
-  -e ENVIRONMENT=production \
-  -e SECRET_KEY='change-me' \
-  -e DATABASE_URL='postgresql://user:pass@host:5432/dbname' \
-  -e DEFAULT_ADMIN_EMAIL='admin@college.edu' \
-  -e DEFAULT_ADMIN_PASSWORD='strong-password' \
-  -e MAIL_SERVER='smtp.gmail.com' \
-  -e MAIL_PORT='587' \
-  -e MAIL_USERNAME='your@gmail.com' \
-  -e MAIL_PASSWORD='app-password' \
-  -e MAIL_USE_TLS='true' \
-  -e MAIL_FROM='your@gmail.com' \
-  placement-portal
-```
 
 ## Important Production Notes
 - Do not use SQLite in production.
