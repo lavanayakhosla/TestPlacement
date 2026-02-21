@@ -6,6 +6,10 @@
     <h3>Add Company</h3>
     <form method="post">
       <input name="name" placeholder="Company Name" required>
+      <input name="hiring_role" placeholder="Role hiring for (e.g. SDE, Data Analyst)">
+      <input name="apply_link" type="url" placeholder="Link to apply (company career page URL)">
+      <label>Application deadline (optional)</label>
+      <input name="application_deadline" type="date" placeholder="YYYY-MM-DD">
       <input name="eligible_branches" placeholder="Eligible branches (CSE,ECE) or ALL" value="ALL">
       <input type="number" name="min_cgpa" step="0.01" min="0" max="10" value="0">
       <input type="number" name="max_backlogs" min="0" value="999">
@@ -30,7 +34,7 @@
   <div class="card">
     <h3>Available Template Sources</h3>
     <p><code>student.roll_no</code>, <code>student.name</code>, <code>student.branch</code>, <code>student.cgpa</code>, <code>student.backlogs</code>, <code>student.lateral_entry</code>, <code>student.resume_link</code>, <code>student.eligibility_status</code></p>
-    <p><code>application.status</code>, <code>application.applied_at</code>, <code>company.name</code>, <code>resume.link</code></p>
+    <p><code>application.status</code>, <code>application.applied_at</code>, <code>company.name</code>, <code>company.hiring_role</code>, <code>company.apply_link</code>, <code>company.application_deadline</code>, <code>resume.link</code></p>
   </div>
 </div>
 
@@ -39,6 +43,9 @@
   <thead>
     <tr>
       <th>Name</th>
+      <th>Role</th>
+      <th>Apply Link</th>
+      <th>Deadline</th>
       <th>Branches</th>
       <th>Min CGPA</th>
       <th>Max Backlogs</th>
@@ -50,6 +57,9 @@
     {% for c in companies %}
     <tr>
       <td>{{ c.name }}</td>
+      <td>{{ c.hiring_role or "—" }}</td>
+      <td>{% if c.apply_link %}<a href="{{ c.apply_link }}" target="_blank" rel="noopener noreferrer">Apply here</a>{% else %}—{% endif %}</td>
+      <td>{{ c.application_deadline.strftime('%Y-%m-%d %H:%M') if c.application_deadline else "—" }}</td>
       <td>{{ c.eligible_branches }}</td>
       <td>{{ c.min_cgpa }}</td>
       <td>{{ c.max_backlogs }}</td>

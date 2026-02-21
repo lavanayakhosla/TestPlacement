@@ -43,6 +43,9 @@
       <th>Applied At</th>
       <th>Student</th>
       <th>Company</th>
+      <th>Role</th>
+      <th>Apply at Company</th>
+      <th>Deadline</th>
       <th>Company Policy</th>
       <th>Status</th>
       <th>Resume Link</th>
@@ -58,6 +61,9 @@
       <td>{{ a.applied_at.strftime('%Y-%m-%d %H:%M') }}</td>
       <td>{{ a.student.roll_no }} - {{ a.student.name }}</td>
       <td>{{ a.company.name }}</td>
+      <td>{{ a.company.hiring_role or "—" }}</td>
+      <td>{% if a.company.apply_link %}<a href="{{ a.company.apply_link }}" target="_blank" rel="noopener noreferrer">Apply here</a>{% else %}—{% endif %}</td>
+      <td>{{ a.company.application_deadline.strftime('%Y-%m-%d %H:%M') if a.company.application_deadline else "—" }}</td>
       <td>{{ a.company.selection_policy }}</td>
       <td>{{ a.status }}</td>
       <td>{{ a.student.resume_link or "Not set" }}</td>

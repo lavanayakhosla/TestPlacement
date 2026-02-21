@@ -131,6 +131,9 @@ class BacklogUpdate(db.Model):
 class Company(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(120), unique=True, nullable=False)
+    hiring_role = db.Column(db.String(255), nullable=True)
+    apply_link = db.Column(db.String(1024), nullable=True)
+    application_deadline = db.Column(db.DateTime, nullable=True)
     eligible_branches = db.Column(db.String(255), nullable=False, default="ALL")
     min_cgpa = db.Column(db.Float, default=0.0, nullable=False)
     max_backlogs = db.Column(db.Integer, default=999, nullable=False)
@@ -518,6 +521,9 @@ def resolve_source(source: str, application: Application):
         "application.status": application.status,
         "application.applied_at": application.applied_at.strftime("%Y-%m-%d %H:%M:%S"),
         "company.name": application.company.name,
+        "company.hiring_role": (application.company.hiring_role or "").strip(),
+        "company.apply_link": (application.company.apply_link or "").strip(),
+        "company.application_deadline": application.company.application_deadline.strftime("%Y-%m-%d %H:%M") if application.company.application_deadline else "",
         "resume.link": student.resume_link or "",
         "resume.path": student.resume_link or "",
         "resume.filename": student.resume_link or "",
@@ -607,8 +613,18 @@ def companies():
             flash("Invalid export template JSON.")
             return redirect(url_for("companies"))
 
+        deadline = None
+        raw_deadline = request.form.get("application_deadline", "").strip()
+        if raw_deadline:
+            try:
+                deadline = datetime.strptime(raw_deadline, "%Y-%m-%d").replace(hour=23, minute=59, second=59, microsecond=0)
+            except ValueError:
+                pass
         company = Company(
             name=request.form["name"].strip(),
+            hiring_role=request.form.get("hiring_role", "").strip() or None,
+            apply_link=request.form.get("apply_link", "").strip() or None,
+            application_deadline=deadline,
             eligible_branches=request.form.get("eligible_branches", "ALL").strip().upper() or "ALL",
             min_cgpa=float(request.form.get("min_cgpa", "0")),
             max_backlogs=int(request.form.get("max_backlogs", "999")),
@@ -654,6 +670,10 @@ def applications():
         existing = Application.query.filter_by(student_id=student.id, company_id=company.id).first()
         if existing:
             flash("Student already applied to this company.")
+            return redirect(url_for("applications"))
+
+        if company.application_deadline and datetime.utcnow() > company.application_deadline:
+            flash(f"Application deadline for {company.name} has passed ({company.application_deadline.strftime('%Y-%m-%d %H:%M')} UTC).")
             return redirect(url_for("applications"))
 
         if not student.resume_link:
@@ -1128,6 +1148,15 @@ def ensure_schema_updates():
         db.session.execute(
             text("ALTER TABLE company ADD COLUMN selection_policy VARCHAR(32) DEFAULT 'NON_BLOCKING'")
         )
+        db.session.commit()
+    if "hiring_role" not in company_cols:
+        db.session.execute(text("ALTER TABLE company ADD COLUMN hiring_role VARCHAR(255)"))
+        db.session.commit()
+    if "apply_link" not in company_cols:
+        db.session.execute(text("ALTER TABLE company ADD COLUMN apply_link VARCHAR(1024)"))
+        db.session.commit()
+    if "application_deadline" not in company_cols:
+        db.session.execute(text("ALTER TABLE company ADD COLUMN application_deadline DATETIME"))
         db.session.commit()
 
     sem_perf_cols = {col["name"] for col in inspector.get_columns("semester_performance")}
