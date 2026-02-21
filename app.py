@@ -82,6 +82,15 @@ ELIGIBILITY_STATUSES = {
 }
 SELECTION_POLICIES = {"BLOCKING", "NON_BLOCKING"}
 
+BRANCH_CHOICES = ["CSE", "CSE AI", "ECE", "ECE AI", "IT", "MAE", "AI ML", "DMAM"]
+
+
+def _parse_eligible_branches(selected):
+    if not selected or "ALL" in (s.strip().upper() for s in selected if s):
+        return "ALL"
+    branches = sorted(set(b.strip() for b in selected if b and b.strip()))
+    return ",".join(branches) if branches else "ALL"
+
 
 class Student(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -231,6 +240,11 @@ def current_user():
 @app.before_request
 def load_user():
     g.user = current_user()
+
+
+@app.context_processor
+def inject_branch_choices():
+    return {"branch_choices": BRANCH_CHOICES}
 
 
 def login_required(fn):
@@ -623,7 +637,7 @@ def companies():
             hiring_role=request.form.get("hiring_role", "").strip() or None,
             apply_link=request.form.get("apply_link", "").strip() or None,
             application_deadline=deadline,
-            eligible_branches=request.form.get("eligible_branches", "ALL").strip().upper() or "ALL",
+            eligible_branches=_parse_eligible_branches(request.form.getlist("eligible_branches")),
             min_cgpa=float(request.form.get("min_cgpa", "0")),
             max_backlogs=int(request.form.get("max_backlogs", "999")),
             selection_policy=selection_policy,

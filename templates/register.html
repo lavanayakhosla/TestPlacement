@@ -21,7 +21,11 @@
       <div id="studentFields">
         <input name="roll_no" placeholder="Roll No">
         <input name="name" placeholder="Full Name">
-        <input name="branch" placeholder="Branch (CSE, ECE...)">
+        <label>Branch</label>
+        <select name="branch">
+          <option value="">Select branch</option>
+          {% for b in branch_choices %}<option value="{{ b }}">{{ b }}</option>{% endfor %}
+        </select>
         <label><input type="checkbox" name="is_lateral_entry"> Lateral Entry</label>
       </div>
 

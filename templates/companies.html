@@ -10,9 +10,15 @@
       <input name="apply_link" type="url" placeholder="Link to apply (company career page URL)">
       <label>Application deadline (optional)</label>
       <input name="application_deadline" type="date" placeholder="YYYY-MM-DD">
-      <input name="eligible_branches" placeholder="Eligible branches (CSE,ECE) or ALL" value="ALL">
-      <input type="number" name="min_cgpa" step="0.01" min="0" max="10" value="0">
-      <input type="number" name="max_backlogs" min="0" value="999">
+      <label>Eligible branches (select ALL or pick multiple: Ctrl/Cmd + click)</label>
+      <select name="eligible_branches" multiple size="10">
+        <option value="ALL">ALL</option>
+        {% for b in branch_choices %}<option value="{{ b }}">{{ b }}</option>{% endfor %}
+      </select>
+      <label>Minimum CGPA required (0–10)</label>
+      <input type="number" name="min_cgpa" step="0.01" min="0" max="10" value="0" placeholder="e.g. 6.0">
+      <label>Maximum backlogs allowed</label>
+      <input type="number" name="max_backlogs" min="0" value="999" placeholder="e.g. 0 or 2">
       <label>Selection Policy</label>
       <select name="selection_policy">
         <option value="NON_BLOCKING">NON_BLOCKING (student can apply elsewhere)</option>

@@ -7,8 +7,16 @@
     <form method="post">
       <input name="roll_no" placeholder="Roll No" required>
       <input name="name" placeholder="Full Name" required>
-      <input name="branch" placeholder="Branch (CSE, ECE...)" required>
-      <input type="number" name="current_semester" min="1" max="8" value="1" required>
+      <label>Branch</label>
+      <select name="branch" required>
+        <option value="">Select branch</option>
+        {% for b in branch_choices %}<option value="{{ b }}">{{ b }}</option>{% endfor %}
+      </select>
+      <label>Current semester</label>
+      <select name="current_semester" required>
+        <option value="">Select semester</option>
+        {% for s in range(1, 9) %}<option value="{{ s }}">{{ s }}</option>{% endfor %}
+      </select>
       <input name="resume_link" placeholder="Resume Link (Drive/Dropbox URL)">
       <label>Eligibility Status</label>
       <select name="eligibility_status">
