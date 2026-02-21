@@ -1245,7 +1245,7 @@ def ensure_schema_updates():
         db.session.execute(text("ALTER TABLE company ADD COLUMN apply_link VARCHAR(1024)"))
         db.session.commit()
     if "application_deadline" not in company_cols:
-        db.session.execute(text("ALTER TABLE company ADD COLUMN application_deadline DATETIME"))
+        db.session.execute(text("ALTER TABLE company ADD COLUMN application_deadline TIMESTAMP"))
         db.session.commit()
 
     sem_perf_cols = {col["name"] for col in inspector.get_columns("semester_performance")}
