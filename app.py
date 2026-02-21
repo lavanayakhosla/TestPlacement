@@ -3,7 +3,7 @@ import json
 import os
 import re
 import smtplib
-import socket
+import ssl
 from datetime import datetime, timedelta
 from email.mime.text import MIMEText
 from functools import wraps
@@ -12,6 +12,9 @@ from random import randint
 
 import pandas as pd
 import pdfplumber
+from dotenv import load_dotenv
+
+load_dotenv()
 from flask import (
     Flask,
     flash,
@@ -54,7 +57,7 @@ app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "dev-secret-key-change-me")
 app.config["MAX_CONTENT_LENGTH"] = 20 * 1024 * 1024
 app.config["ENVIRONMENT"] = os.environ.get("ENVIRONMENT", "development")
-app.config["MAIL_SERVER"] = os.environ.get("MAIL_SERVER")
+app.config["MAIL_SERVER"] = (os.environ.get("MAIL_SERVER") or "").strip() or None
 app.config["MAIL_PORT"] = int(os.environ.get("MAIL_PORT", "587"))
 app.config["MAIL_USERNAME"] = os.environ.get("MAIL_USERNAME")
 app.config["MAIL_PASSWORD"] = os.environ.get("MAIL_PASSWORD")
@@ -267,15 +270,16 @@ def send_email(to_email: str, subject: str, body: str, user_id=None) -> bool:
     db.session.add(log)
     db.session.flush()
 
-    server = app.config.get("MAIL_SERVER")
+    server = (app.config.get("MAIL_SERVER") or "").strip()
     username = app.config.get("MAIL_USERNAME")
     password = app.config.get("MAIL_PASSWORD")
-    port = app.config.get("MAIL_PORT")
+    port = int(app.config.get("MAIL_PORT", 587))
     use_tls = app.config.get("MAIL_USE_TLS")
     mail_from = app.config.get("MAIL_FROM")
 
-    if not server:
+    if not server or server.startswith("."):
         log.status = "NO_MAIL_SERVER_CONFIGURED"
+        log.error_message = "MAIL_SERVER is empty or invalid."
         db.session.commit()
         return False
 
@@ -285,32 +289,16 @@ def send_email(to_email: str, subject: str, body: str, user_id=None) -> bool:
     msg["To"] = to_email
 
     try:
-        # Some hosting environments fail IPv6 routes for SMTP.
-        # Try all resolved addresses and prefer successful IPv4 fallback.
-        send_ok = False
-        last_exc = None
-        addrinfos = socket.getaddrinfo(server, port, proto=socket.IPPROTO_TCP)
-        for family, socktype, proto, _, sockaddr in addrinfos:
-            try:
-                with smtplib.SMTP(timeout=15) as smtp:
-                    smtp.connect(sockaddr[0], sockaddr[1])
-                    if use_tls:
-                        smtp.starttls()
-                    if username:
-                        smtp.login(username, password or "")
-                    smtp.send_message(msg)
-                send_ok = True
-                break
-            except Exception as exc:
-                last_exc = exc
-                continue
-
-        if send_ok:
-            log.status = "SENT"
-            log.error_message = None
-        else:
-            log.status = "FAILED"
-            log.error_message = str(last_exc)[:1024] if last_exc else "Unknown SMTP error"
+        with smtplib.SMTP(timeout=15) as smtp:
+            smtp.connect(server, port)
+            if use_tls:
+                smtp._host = server
+                smtp.starttls(context=ssl.create_default_context())
+            if username:
+                smtp.login(username, password or "")
+            smtp.send_message(msg)
+        log.status = "SENT"
+        log.error_message = None
     except Exception as exc:
         log.status = "FAILED"
         log.error_message = str(exc)[:1024]
@@ -320,6 +308,16 @@ def send_email(to_email: str, subject: str, body: str, user_id=None) -> bool:
 
 def mail_config_loaded():
     return bool(app.config.get("MAIL_SERVER"))
+
+
+def last_mail_error_for(email: str):
+    """Return the error_message of the most recent failed send to this email (for debugging)."""
+    log = (
+        NotificationLog.query.filter_by(email=email, status="FAILED")
+        .order_by(NotificationLog.created_at.desc())
+        .first()
+    )
+    return log.error_message if log else None
 
 
 def issue_otp(user: User, purpose: str) -> OTPToken:
@@ -980,10 +978,16 @@ def register():
         if sent:
             flash("Account created. OTP sent to email for verification.")
         else:
+            msg = "Account created, but OTP email failed to send."
             if mail_config_loaded():
-                flash(f"Account created, but OTP email failed to send. OTP: {token.code}")
+                err = last_mail_error_for(user.email)
+                if err and app.config["ENVIRONMENT"] != "production":
+                    msg += f" Reason: {err}"
+                else:
+                    msg += f" OTP: {token.code}"
             else:
-                flash(f"Account created. Mail server not configured. OTP: {token.code}")
+                msg = f"Account created. Mail server not configured. OTP: {token.code}"
+            flash(msg)
         return redirect(url_for("verify_email"))
 
     return render_template("register.html")
@@ -997,7 +1001,28 @@ def verify_email():
         return redirect(url_for("login"))
     user = User.query.get_or_404(user_id)
     if request.method == "POST":
-        code = request.form["otp"].strip()
+        if request.form.get("resend") == "1":
+            token = issue_otp(user, "VERIFY_EMAIL")
+            sent = send_email(
+                user.email,
+                "Verify your Placement Portal account",
+                f"Your new OTP is {token.code}. It expires in 10 minutes.",
+                user_id=user.id,
+            )
+            if sent:
+                flash("New OTP sent to your email.")
+            else:
+                msg = "Could not send email."
+                err = last_mail_error_for(user.email)
+                if err and app.config["ENVIRONMENT"] != "production":
+                    flash(f"{msg} Reason: {err}")
+                else:
+                    flash(f"{msg} OTP: {token.code}")
+            return redirect(url_for("verify_email"))
+        code = request.form.get("otp", "").strip()
+        if not code:
+            flash("Enter the 6-digit OTP.")
+            return redirect(url_for("verify_email"))
         ok, msg = verify_otp(user, "VERIFY_EMAIL", code)
         if not ok:
             flash(msg)
@@ -1008,6 +1033,70 @@ def verify_email():
         flash("Email verified. Please login.")
         return redirect(url_for("login"))
     return render_template("verify_email.html", email=user.email, purpose="Verify Email")
+
+
+@app.route("/auth/forgot-password", methods=["GET", "POST"])
+def forgot_password():
+    if request.method == "POST":
+        email = request.form.get("email", "").strip().lower()
+        if not email:
+            flash("Enter your email address.")
+            return redirect(url_for("forgot_password"))
+        user = User.query.filter_by(email=email).first()
+        if not user:
+            flash("If an account exists with this email, an OTP will be sent. Check your inbox.")
+            return redirect(url_for("login"))
+        token = issue_otp(user, "RESET_PASSWORD")
+        sent = send_email(
+            user.email,
+            "Reset your Placement Portal password",
+            f"Your OTP to reset password is {token.code}. It expires in 10 minutes.",
+            user_id=user.id,
+        )
+        session["pending_reset_user_id"] = user.id
+        if sent:
+            flash("OTP sent to your email. Enter it below to set a new password.")
+        else:
+            msg = "Email could not be sent."
+            err = last_mail_error_for(user.email)
+            if err and app.config["ENVIRONMENT"] != "production":
+                flash(f"{msg} Reason: {err}")
+            else:
+                flash(f"{msg} OTP: {token.code}")
+        return redirect(url_for("reset_password"))
+    return render_template("forgot_password.html")
+
+
+@app.route("/auth/reset-password", methods=["GET", "POST"])
+def reset_password():
+    user_id = session.get("pending_reset_user_id")
+    if not user_id:
+        flash("Start from Forgot password and enter your email first.")
+        return redirect(url_for("forgot_password"))
+    user = User.query.get_or_404(user_id)
+    if request.method == "POST":
+        code = request.form.get("otp", "").strip()
+        new_password = request.form.get("new_password", "")
+        confirm = request.form.get("confirm_password", "")
+        if not code:
+            flash("Enter the 6-digit OTP.")
+            return redirect(url_for("reset_password"))
+        if len(new_password) < 8:
+            flash("Password must be at least 8 characters.")
+            return redirect(url_for("reset_password"))
+        if new_password != confirm:
+            flash("Passwords do not match.")
+            return redirect(url_for("reset_password"))
+        ok, msg = verify_otp(user, "RESET_PASSWORD", code)
+        if not ok:
+            flash(msg)
+            return redirect(url_for("reset_password"))
+        user.set_password(new_password)
+        db.session.commit()
+        session.pop("pending_reset_user_id", None)
+        flash("Password reset successfully. Please login.")
+        return redirect(url_for("login"))
+    return render_template("reset_password.html", email=user.email)
 
 
 @app.route("/auth/login", methods=["GET", "POST"])

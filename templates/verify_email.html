@@ -2,10 +2,12 @@
 {% block content %}
 <h1>{{ purpose }}</h1>
 <div class="card" style="max-width: 420px;">
-  <p>OTP sent to <b>{{ email }}</b>.</p>
+  <p>A 6-digit OTP was sent to <b>{{ email }}</b>. Enter it below to verify your account.</p>
   <form method="post">
-    <input name="otp" placeholder="6-digit OTP" minlength="6" maxlength="6" required>
+    <input name="otp" placeholder="6-digit OTP" minlength="6" maxlength="6" required autocomplete="one-time-code">
     <button type="submit">Verify OTP</button>
   </form>
+  <p>Didn't get the code? <form method="post" style="display:inline;"><input type="hidden" name="resend" value="1"><button type="submit" class="link-button">Resend OTP</button></form></p>
+  <p><a href="{{ url_for('login') }}">Back to Login</a></p>
 </div>
 {% endblock %}
