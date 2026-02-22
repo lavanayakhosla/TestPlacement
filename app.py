@@ -995,12 +995,11 @@ def register():
             msg = "Account created, but OTP email failed to send."
             if mail_config_loaded():
                 err = last_mail_error_for(user.email)
-                if err and app.config["ENVIRONMENT"] != "production":
+                msg += f" OTP: {token.code}"
+                if err:
                     msg += f" Reason: {err}"
-                else:
-                    msg += f" OTP: {token.code}"
             else:
-                msg = f"Account created. Mail server not configured. OTP: {token.code}"
+                msg = f"Account created. Set MAIL_* in .env (local) or deployment env. OTP: {token.code}"
             flash(msg)
         return redirect(url_for("verify_email"))
 
@@ -1028,10 +1027,7 @@ def verify_email():
             else:
                 msg = "Could not send email."
                 err = last_mail_error_for(user.email)
-                if err and app.config["ENVIRONMENT"] != "production":
-                    flash(f"{msg} Reason: {err}")
-                else:
-                    flash(f"{msg} OTP: {token.code}")
+                flash(f"{msg} OTP: {token.code}" + (f" Reason: {err}" if err else ""))
             return redirect(url_for("verify_email"))
         code = request.form.get("otp", "").strip()
         if not code:
@@ -1073,10 +1069,7 @@ def forgot_password():
         else:
             msg = "Email could not be sent."
             err = last_mail_error_for(user.email)
-            if err and app.config["ENVIRONMENT"] != "production":
-                flash(f"{msg} Reason: {err}")
-            else:
-                flash(f"{msg} OTP: {token.code}")
+            flash(f"{msg} OTP: {token.code}" + (f" Reason: {err}" if err else ""))
         return redirect(url_for("reset_password"))
     return render_template("forgot_password.html")
 
