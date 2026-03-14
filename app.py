@@ -9,7 +9,7 @@ from email.mime.text import MIMEText
 from functools import wraps
 from pathlib import Path
 from random import randint
-
+import requests
 import pandas as pd
 import pdfplumber
 from dotenv import load_dotenv
@@ -62,10 +62,10 @@ app.config["MAIL_PORT"] = int(os.environ.get("MAIL_PORT", "587"))
 app.config["MAIL_USERNAME"] = os.environ.get("MAIL_USERNAME")
 app.config["MAIL_PASSWORD"] = os.environ.get("MAIL_PASSWORD")
 app.config["MAIL_USE_TLS"] = os.environ.get("MAIL_USE_TLS", "true").lower() == "true"
-app.config["MAIL_FROM"] = os.environ.get("MAIL_FROM", "no-reply@placement-portal.local")
 app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {"pool_pre_ping": True}
 app.config["PDF_TABLE_FALLBACK"] = os.environ.get("PDF_TABLE_FALLBACK", "false").lower() == "true"
-
+app.config["BREVO_API_KEY"] = os.environ.get("BREVO_API_KEY")
+app.config["MAIL_FROM"] = os.environ.get("MAIL_FROM", "khoslalavanaya@gmail.com")
 if app.config["ENVIRONMENT"].lower() == "production":
     app.config["SESSION_COOKIE_SECURE"] = True
     app.config["SESSION_COOKIE_HTTPONLY"] = True
@@ -280,43 +280,62 @@ def generate_otp():
 
 
 def send_email(to_email: str, subject: str, body: str, user_id=None) -> bool:
-    log = NotificationLog(user_id=user_id, email=to_email, subject=subject, body=body, status="PENDING")
+    log = NotificationLog(
+        user_id=user_id,
+        email=to_email,
+        subject=subject,
+        body=body,
+        status="PENDING",
+    )
+
     db.session.add(log)
     db.session.flush()
 
-    server = (app.config.get("MAIL_SERVER") or "").strip()
-    username = app.config.get("MAIL_USERNAME")
-    password = app.config.get("MAIL_PASSWORD")
-    port = int(app.config.get("MAIL_PORT", 587))
-    use_tls = app.config.get("MAIL_USE_TLS")
-    mail_from = app.config.get("MAIL_FROM")
+    api_key = app.config.get("BREVO_API_KEY")
+    sender_email = app.config.get("MAIL_FROM")
 
-    if not server or server.startswith("."):
-        log.status = "NO_MAIL_SERVER_CONFIGURED"
-        log.error_message = "MAIL_SERVER is empty or invalid."
+    if not api_key:
+        log.status = "NO_API_KEY"
+        log.error_message = "BREVO_API_KEY not configured."
         db.session.commit()
         return False
 
-    msg = MIMEText(body)
-    msg["Subject"] = subject
-    msg["From"] = mail_from
-    msg["To"] = to_email
+    url = "https://api.brevo.com/v3/smtp/email"
+
+    headers = {
+        "accept": "application/json",
+        "api-key": api_key,
+        "content-type": "application/json",
+    }
+
+    payload = {
+        "sender": {
+            "name": "Placement Portal",
+            "email": sender_email
+        },
+        "to": [
+            {"email": to_email}
+        ],
+        "subject": subject,
+        "textContent": body
+    }
 
     try:
-        with smtplib.SMTP(timeout=15) as smtp:
-            smtp.connect(server, port)
-            if use_tls:
-                smtp._host = server
-                smtp.starttls(context=ssl.create_default_context())
-            if username:
-                smtp.login(username, password or "")
-            smtp.send_message(msg)
-        log.status = "SENT"
-        log.error_message = None
+        response = requests.post(url, headers=headers, json=payload)
+
+        if response.status_code == 201:
+            log.status = "SENT"
+            log.error_message = None
+        else:
+            log.status = "FAILED"
+            log.error_message = response.text[:1024]
+
     except Exception as exc:
         log.status = "FAILED"
         log.error_message = str(exc)[:1024]
+
     db.session.commit()
+
     return log.status == "SENT"
 
 
