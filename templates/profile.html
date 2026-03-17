@@ -15,6 +15,32 @@
     <p><b>Eligibility Status:</b> {{ student.eligibility_status }}</p>
   </div>
   <div class="card">
+  <h3>Semester Performance</h3>
+
+  {% if student.semester_records %}
+    <table>
+      <thead>
+        <tr>
+          <th>Semester</th>
+          <th>SGPA</th>
+          <th>Backlogs</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for sem in student.semester_records %}
+        <tr>
+          <td>{{ sem.semester_no }}</td>
+          <td>{{ sem.sgpa }}</td>
+          <td>{{ sem.backlog_count }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p>No semester data available.</p>
+  {% endif %}
+</div>
+  <div class="card">
     <h3>Resume Link</h3>
     <p>
       <b>Current:</b>
