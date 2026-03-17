@@ -594,6 +594,7 @@ def students():
             roll_no=request.form["roll_no"].strip().upper(),
             name=request.form["name"].strip(),
             branch=request.form["branch"].strip().upper(),
+             cgpa=float(request.form.get("cgpa", "0")), 
             is_lateral_entry=request.form.get("is_lateral_entry") == "on",
             current_semester=int(request.form.get("current_semester", "1")),
             resume_link=request.form.get("resume_link", "").strip() or None,
