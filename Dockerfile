@@ -14,4 +14,5 @@ RUN mkdir -p /app/uploads/resumes /app/uploads/pdf_imports
 
 EXPOSE 8000
 
-CMD ["gunicorn", "--bind", "0.0.0.0:8000", "app:app"]
+
+CMD ["gunicorn", "--bind", "0.0.0.0:8000", "app:app", "--workers", "1" , "--threads", "2" , "--timeout", "180"]
