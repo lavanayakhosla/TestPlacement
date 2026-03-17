@@ -412,40 +412,45 @@ def refresh_student_metrics(student: Student) -> None:
 def parse_pdf_rows(pdf_path: Path):
     def parse_from_text() -> list[dict]:
         extracted_text_rows = []
-      line_re = re.compile(
-    r"^\s*\d+\s+([A-Za-z0-9/-]{5,})\s+(.+?)\s+(10(?:\.0+)?|[0-9](?:\.\d{1,2})?)\s+(.+)$"
-)
+
+        line_re = re.compile(
+            r"^\s*\d+\s+([A-Za-z0-9/-]{5,})\s+(.+?)\s+(10(?:\.0+)?|[0-9](?:\.\d{1,2})?)\s+(.+)$"
+        )
+
         with pdfplumber.open(str(pdf_path)) as pdf:
             for page in pdf.pages:
                 text = page.extract_text() or ""
                 if not text:
                     continue
+
                 for line in text.splitlines():
                     line = line.strip()
+
                     match = line_re.match(line)
                     if not match:
                         continue
+
                     roll_no = match.group(1).strip().upper()
                     name = match.group(2).strip()
-                   sgpa = float(match.group(3))
+                    sgpa = float(match.group(3))
 
-# NEW PART 👇
-grades_str = match.group(4).strip()
-grades = grades_str.split()
+                    # NEW PART 👇
+                    grades_str = match.group(4).strip()
+                    grades = grades_str.split()
 
-# Count F
-backlog = sum(1 for g in grades if g.upper() == "F")
+                    # Count F
+                    backlog = sum(1 for g in grades if g.upper() == "F")
 
-extracted_text_rows.append(
-    {
-        "roll_no": roll_no,
-        "name": name,
-        "sgpa": sgpa,
-        "backlog": backlog,
-    }
-)
+                    extracted_text_rows.append(
+                        {
+                            "roll_no": roll_no,
+                            "name": name,
+                            "sgpa": sgpa,
+                            "backlog": backlog,
+                        }
+                    )
+
         return extracted_text_rows
-
 
     fast_rows = parse_from_text()
     if fast_rows:
