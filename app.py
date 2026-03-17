@@ -506,7 +506,41 @@ extracted_text_rows.append(
                     )
     return extracted
 
+@app.route("/students/<int:student_id>/update-semester", methods=["POST"])
+@role_required("ADMIN", "PLACEMENT_COORDINATOR")
+def update_semester(student_id: int):
+    student = Student.query.get_or_404(student_id)
 
+    semester_no = int(request.form["semester_no"])
+    new_sgpa = float(request.form["sgpa"])
+    new_backlog = int(request.form.get("backlog", 0))
+    credits = float(request.form.get("semester_credits", 0))
+
+    perf = SemesterPerformance.query.filter_by(
+        student_id=student.id,
+        semester_no=semester_no
+    ).first()
+
+    if not perf:
+        perf = SemesterPerformance(
+            student_id=student.id,
+            semester_no=semester_no,
+            sgpa=new_sgpa,
+            semester_credits=credits,
+            backlog_count=new_backlog,
+        )
+        db.session.add(perf)
+    else:
+        perf.sgpa = new_sgpa
+        perf.backlog_count = new_backlog
+        if credits > 0:
+            perf.semester_credits = credits
+
+    refresh_student_metrics(student)
+    db.session.commit()
+
+    flash("Semester SGPA and backlog updated successfully.")
+    return redirect(url_for("students"))
 def allowed_for_company(student: Student, company: Company):
     if student.eligibility_status == "EXTERNAL_PLACED":
         return False, "Student is marked as already placed externally."
