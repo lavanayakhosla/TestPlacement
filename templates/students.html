@@ -17,6 +17,7 @@
         <option value="">Select semester</option>
         {% for s in range(1, 9) %}<option value="{{ s }}">{{ s }}</option>{% endfor %}
       </select>
+      <input type="number" step="0.01" name="cgpa" placeholder="CGPA" />
       <input name="resume_link" placeholder="Resume Link (Drive/Dropbox URL)">
       <label>Eligibility Status</label>
       <select name="eligibility_status">
