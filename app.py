@@ -1226,6 +1226,22 @@ def admin_users():
         return redirect(url_for("admin_users"))
     users = User.query.order_by(User.created_at.desc()).all()
     return render_template("admin_users.html", users=users)
+@app.route("/applications/<int:application_id>/delete", methods=["POST"])
+@login_required
+def delete_application(application_id: int):
+    app_entry = Application.query.get_or_404(application_id)
+
+    # 🔐 Security check
+    if g.user.role == "STUDENT":
+        if g.user.student_id != app_entry.student_id:
+            flash("You can delete only your own applications.")
+            return redirect(url_for("applications"))
+
+    db.session.delete(app_entry)
+    db.session.commit()
+
+    flash("Application deleted successfully.")
+    return redirect(url_for("applications"))
 
 
 @app.route("/admin/mail-debug")
