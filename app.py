@@ -734,7 +734,7 @@ def companies():
             eligible_branches=_parse_eligible_branches(request.form.getlist("eligible_branches")),
             min_cgpa=float(request.form.get("min_cgpa", "0")),
             max_backlogs=int(request.form.get("max_backlogs", "999")),
-            allow_dead_backlogs=allow_dead
+            allow_dead_backlogs=allow_dead,
             selection_policy=selection_policy,
             export_template_json=template_text,
         )
