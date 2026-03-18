@@ -101,6 +101,7 @@ class Student(db.Model):
     current_semester = db.Column(db.Integer, default=1, nullable=False)
     cgpa = db.Column(db.Float, default=0.0, nullable=False)
     total_backlogs = db.Column(db.Integer, default=0, nullable=False)
+    dead_backlogs = db.Column(db.Integer, default=0, nullable=False)
     resume_link = db.Column(db.String(1024), nullable=True)
     eligibility_status = db.Column(db.String(32), default="ELIGIBLE", nullable=False, index=True)
     block_reason = db.Column(db.String(255), nullable=True)
@@ -149,6 +150,7 @@ class Company(db.Model):
     eligible_branches = db.Column(db.String(255), nullable=False, default="ALL")
     min_cgpa = db.Column(db.Float, default=0.0, nullable=False)
     max_backlogs = db.Column(db.Integer, default=999, nullable=False)
+    allow_dead_backlogs = db.Column(db.Boolean, default=True)
     selection_policy = db.Column(db.String(32), default="NON_BLOCKING", nullable=False)
     export_template_json = db.Column(db.Text, nullable=False, default="[]")
    
@@ -404,11 +406,21 @@ def calculate_cgpa(student: Student) -> float:
 def calculate_backlog(student: Student) -> int:
     records = SemesterPerformance.query.filter_by(student_id=student.id).all()
     return sum(max(0, r.backlog_count) for r in records)
+    
+def calculate_dead_backlogs(student: Student) -> int:
+    updates = BacklogUpdate.query.filter_by(student_id=student.id).all()
 
+    dead = 0
+    for u in updates:
+        if u.old_backlog > 0 and u.new_backlog == 0:
+            dead += u.old_backlog   # count cleared backlogs
+
+    return dead
 
 def refresh_student_metrics(student: Student) -> None:
     student.cgpa = calculate_cgpa(student)
     student.total_backlogs = calculate_backlog(student)
+    student.dead_backlogs = calculate_dead_backlogs(student)
 
 
 def parse_pdf_rows(pdf_path: Path):
@@ -567,7 +579,13 @@ def allowed_for_company(student: Student, company: Company):
         return False, f"CGPA {student.cgpa} is below min {company.min_cgpa}"
     if student.total_backlogs > company.max_backlogs:
         return False, f"Backlogs {student.total_backlogs} exceed max {company.max_backlogs}"
+   
+    # NEW DEAD BACKLOG CHECK
+    if not company.allow_dead_backlogs and student.dead_backlogs > 0:
+        return False, "Dead backlogs are not allowed for this company"
+
     return True, "Eligible"
+    
 
 
 def recompute_blocking_status(student: Student):
@@ -1381,6 +1399,15 @@ def ensure_schema_updates():
     if "blocked_by_company_id" not in student_cols:
         db.session.execute(text("ALTER TABLE student ADD COLUMN blocked_by_company_id INTEGER"))
         db.session.commit()
+    if "dead_backlogs" not in student_cols:
+        db.session.execute(text("ALTER TABLE student ADD COLUMN dead_backlogs INTEGER DEFAULT 0"))
+        db.session.commit()
+
+
+
+
+
+    
 
     company_cols = {col["name"] for col in inspector.get_columns("company")}
     if "selection_policy" not in company_cols:
@@ -1397,6 +1424,11 @@ def ensure_schema_updates():
     if "application_deadline" not in company_cols:
         db.session.execute(text("ALTER TABLE company ADD COLUMN application_deadline TIMESTAMP"))
         db.session.commit()
+    if "allow_dead_backlogs" not in company_cols:
+    db.session.execute(
+        text("ALTER TABLE company ADD COLUMN allow_dead_backlogs BOOLEAN DEFAULT 1")
+    )
+    db.session.commit()
 
     sem_perf_cols = {col["name"] for col in inspector.get_columns("semester_performance")}
     if "semester_credits" not in sem_perf_cols:
