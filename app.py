@@ -151,7 +151,7 @@ class Company(db.Model):
     max_backlogs = db.Column(db.Integer, default=999, nullable=False)
     selection_policy = db.Column(db.String(32), default="NON_BLOCKING", nullable=False)
     export_template_json = db.Column(db.Text, nullable=False, default="[]")
-    extra_fields_json = db.Column(db.Text, default="[]")
+   
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     applications = db.relationship("Application", backref="company", lazy=True)
 
@@ -176,7 +176,7 @@ class Application(db.Model):
     student_id = db.Column(db.Integer, db.ForeignKey("student.id"), nullable=False, index=True)
     company_id = db.Column(db.Integer, db.ForeignKey("company.id"), nullable=False, index=True)
     status = db.Column(db.String(32), default="APPLIED", nullable=False)
-    extra_data = db.Column(db.Text, default="{}")
+   
     applied_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     exported_at = db.Column(db.DateTime, nullable=True)
 
@@ -767,26 +767,12 @@ def applications():
             flash("No resume link found for this student. Add resume link first.")
             return redirect(url_for("applications"))
 
-        # 🔥 NEW: collect dynamic fields
-        extra_data = {}
+      
 
-        fields = json.loads(company.extra_fields_json or "[]")
-
-        for field in fields:
-            key = f"extra_{field['name']}"
-            value = request.form.get(key)
-
-            if field.get("required") and not value:
-            flash(f"{field['label']} is required.")
-            return redirect(url_for("applications"))
-
-        extra_data[field["name"]] = value
-
-# ✅ create application with extra_data
         app_entry = Application(
             student_id=student.id,
             company_id=company.id,
-            extra_data=json.dumps(extra_data)
+           
         )
         db.session.add(app_entry)
         db.session.commit()
