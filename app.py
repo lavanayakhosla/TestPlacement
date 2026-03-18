@@ -1443,7 +1443,7 @@ def ensure_schema_updates():
         db.session.execute(text("ALTER TABLE student ADD COLUMN blocked_by_company_id INTEGER"))
         db.session.commit()
     if "dead_backlogs" not in student_cols:
-        db.session.execute(text("ALTER TABLE student ADD COLUMN dead_backlogs INTEGER DEFAULT FALSE"))
+        db.session.execute(text("ALTER TABLE student ADD COLUMN dead_backlogs INTEGER DEFAULT 0"))
         db.session.commit()
 
 
