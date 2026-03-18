@@ -94,7 +94,7 @@
       <td>{{ a.student.resume_link or "Not set" }}</td>
       <td>
   {% if g.user.role == "STUDENT" %}
-    <a href="{{ url_for('edit_application', application_id=app.id) }}">
+    <a href="{{ url_for('edit_application', application_id=a.id) }}">
       Edit
     </a>
   {% endif %}
