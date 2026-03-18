@@ -34,7 +34,7 @@
       <td>{{ u.role }}</td>
       <td>{{ "Yes" if u.is_verified else "No" }}</td>
       <td>{{ u.student.roll_no if u.student else "-" }}</td>
-      <td>{{ u.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+      <td>{{ u.created_at | ist }}</td>
     </tr>
     {% endfor %}
   </tbody>
