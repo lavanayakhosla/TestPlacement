@@ -1228,7 +1228,48 @@ def logout():
     session.clear()
     flash("Logged out.")
     return redirect(url_for("login"))
+@app.route("/exports/students")
+@role_required("ADMIN", "PLACEMENT_COORDINATOR")
+def export_students_by_branch():
+    branch = request.args.get("branch", "ALL").strip().upper()
 
+    query = Student.query
+
+    if branch != "ALL":
+        query = query.filter(Student.branch == branch)
+
+    students = query.order_by(Student.roll_no).all()
+
+    rows = []
+    for s in students:
+        rows.append({
+            "Roll No": s.roll_no,
+            "Name": s.name,
+            "Branch": s.branch,
+            "Semester": s.current_semester,
+            "CGPA": s.cgpa,
+            "Active Backlogs": s.total_backlogs,
+            "Dead Backlogs": getattr(s, "dead_backlogs", 0),
+            "Eligibility": s.eligibility_status,
+            "Resume Link": s.resume_link or "",
+        })
+
+    df = pd.DataFrame(rows)
+
+    output = io.BytesIO()
+    with pd.ExcelWriter(output, engine="openpyxl") as writer:
+        df.to_excel(writer, index=False, sheet_name="Students")
+
+    output.seek(0)
+
+    filename = f"students_{branch}_{datetime.utcnow().strftime('%Y%m%d%H%M%S')}.xlsx"
+
+    return send_file(
+        output,
+        mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        as_attachment=True,
+        download_name=filename,
+    )
 
 @app.route("/admin/users", methods=["GET", "POST"])
 @role_required("ADMIN")
