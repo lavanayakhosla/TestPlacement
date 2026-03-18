@@ -35,7 +35,30 @@
     <p>System blocks application when branch/CGPA/backlog criteria do not match company rules.</p>
   </div>
 </div>
+<h3>Download Applicants</h3>
 
+<form method="get" action="{{ url_for('export_applicants') }}">
+  
+  <!-- 🔹 Select Company -->
+  <label>Select Company</label>
+  <select name="company_id" required>
+    <option value="">-- Select Company --</option>
+    {% for c in companies %}
+      <option value="{{ c.id }}">{{ c.name }}</option>
+    {% endfor %}
+  </select>
+
+  <!-- 🔹 Select Branch -->
+  <label>Select Branch</label>
+  <select name="branch">
+    <option value="ALL">ALL</option>
+    {% for b in branch_choices %}
+      <option value="{{ b }}">{{ b }}</option>
+    {% endfor %}
+  </select>
+
+  <button type="submit">Download Applicants</button>
+</form>
 <h3>Submitted Applications</h3>
 <table>
   <thead>
