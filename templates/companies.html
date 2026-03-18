@@ -59,6 +59,7 @@
       <th>Branches</th>
       <th>Min CGPA</th>
       <th>Max Backlogs</th>
+      <th>Dead Backlogs</th>
       <th>Policy</th>
       <th>Export</th>
     </tr>
@@ -73,6 +74,7 @@
       <td>{{ c.eligible_branches }}</td>
       <td>{{ c.min_cgpa }}</td>
       <td>{{ c.max_backlogs }}</td>
+      <td>{{ "Yes" if c.allow_dead_backlogs else "No" }}</td>
       <td>{{ c.selection_policy }}</td>
       <td><a href="{{ url_for('export_company', company_id=c.id) }}">Download Excel</a></td>
     </tr>
