@@ -49,6 +49,7 @@
       <th>Sem</th>
       <th>CGPA</th>
       <th>Backlogs</th>
+      <th>Dead Backlogs</th>
       <th>Eligibility</th>
       <th>Resume Link</th>
       <th>Update Resume Link</th>
@@ -67,6 +68,7 @@
       <td>{{ s.current_semester }}</td>
       <td>{{ s.cgpa }}</td>
       <td>{{ s.total_backlogs }}</td>
+      <td>{{ s.dead_backlogs }}</td>
       <td>{{ s.eligibility_status }}{% if s.block_reason %}<br><small>{{ s.block_reason }}</small>{% endif %}</td>
       <td>{{ s.resume_link or "Not set" }}</td>
       <td>
