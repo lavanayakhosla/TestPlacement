@@ -725,6 +725,7 @@ def companies():
                 deadline = datetime.strptime(raw_deadline, "%Y-%m-%d").replace(hour=23, minute=59, second=59, microsecond=0)
             except ValueError:
                 pass
+        allow_dead = request.form.get("allow_dead_backlogs") == "on"
         company = Company(
             name=request.form["name"].strip(),
             hiring_role=request.form.get("hiring_role", "").strip() or None,
@@ -733,6 +734,7 @@ def companies():
             eligible_branches=_parse_eligible_branches(request.form.getlist("eligible_branches")),
             min_cgpa=float(request.form.get("min_cgpa", "0")),
             max_backlogs=int(request.form.get("max_backlogs", "999")),
+            allow_dead_backlogs=allow_dead
             selection_policy=selection_policy,
             export_template_json=template_text,
         )
