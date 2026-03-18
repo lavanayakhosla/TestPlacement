@@ -71,6 +71,13 @@
       <td>{{ a.student.resume_link or "Not set" }}</td>
       <td>
   {% if g.user.role == "STUDENT" %}
+    <a href="{{ url_for('edit_application', application_id=app.id) }}">
+      Edit
+    </a>
+  {% endif %}
+</td>
+      <td>
+  {% if g.user.role == "STUDENT" %}
     <form action="{{ url_for('delete_application', application_id=app.id) }}" method="post">
       <button type="submit" onclick="return confirm('Are you sure you want to delete this application?')">
         Withdraw Application
