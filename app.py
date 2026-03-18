@@ -1443,7 +1443,7 @@ def ensure_schema_updates():
         db.session.execute(text("ALTER TABLE student ADD COLUMN blocked_by_company_id INTEGER"))
         db.session.commit()
     if "dead_backlogs" not in student_cols:
-        db.session.execute(text("ALTER TABLE student ADD COLUMN dead_backlogs INTEGER DEFAULT 0"))
+        db.session.execute(text("ALTER TABLE student ADD COLUMN dead_backlogs INTEGER DEFAULT FALSE"))
         db.session.commit()
 
 
@@ -1468,7 +1468,7 @@ def ensure_schema_updates():
         db.session.execute(text("ALTER TABLE company ADD COLUMN application_deadline TIMESTAMP"))
         db.session.commit()
     if "allow_dead_backlogs" not in company_cols:
-        db.session.execute(text("ALTER TABLE company ADD COLUMN allow_dead_backlogs BOOLEAN DEFAULT 1"))
+        db.session.execute(text("ALTER TABLE company ADD COLUMN allow_dead_backlogs BOOLEAN DEFAULT TRUE"))
         db.session.commit()
 
     sem_perf_cols = {col["name"] for col in inspector.get_columns("semester_performance")}
