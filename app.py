@@ -638,22 +638,53 @@ def resolve_source(source: str, application: Application):
 @app.route("/")
 @login_required
 def dashboard():
-    if g.user.role == "STUDENT":
+    reminders = []
+
+    # 🔹 Only for students
+    if g.user.role == "STUDENT" and g.user.student_id:
+        student = Student.query.get(g.user.student_id)
+
+        now = datetime.utcnow()
+        upcoming_deadline = now + timedelta(days=3)
+
+        companies = Company.query.filter(
+            Company.application_deadline != None,
+            Company.application_deadline >= now,
+            Company.application_deadline <= upcoming_deadline
+        ).all()
+
+        for c in companies:
+            # already applied?
+            applied = Application.query.filter_by(
+                student_id=student.id,
+                company_id=c.id
+            ).first()
+
+            if applied:
+                continue
+
+            eligible, _ = allowed_for_company(student, c)
+
+            if eligible:
+                reminders.append(c)
+
+        # 👇 STUDENT DASHBOARD
         return render_template(
             "dashboard.html",
-            student_count=1 if g.user.student_id else 0,
+            student_count=1,
             company_count=Company.query.count(),
-            application_count=Application.query.filter_by(student_id=g.user.student_id).count()
-            if g.user.student_id
-            else 0,
+            application_count=Application.query.filter_by(student_id=student.id).count(),
+            reminders=reminders
         )
+
+    # 👇 ADMIN / COORDINATOR DASHBOARD
     return render_template(
         "dashboard.html",
         student_count=Student.query.count(),
         company_count=Company.query.count(),
         application_count=Application.query.count(),
+        reminders=[]  # no reminders for admin
     )
-
 
 @app.route("/students", methods=["GET", "POST"])
 @role_required("ADMIN", "PLACEMENT_COORDINATOR")
