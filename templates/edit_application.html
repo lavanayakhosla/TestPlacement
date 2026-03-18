@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Edit Application - {{ application.company.name }}</h2>
+
+<form method="post">
+
+  <h3>Resume</h3>
+  <input name="resume_link" value="{{ application.student.resume_link }}" required>
+
+  <h3>Additional Details</h3>
+
+  {% for field in fields %}
+    <label>{{ field.label }}</label>
+    <input 
+      type="{{ field.type }}" 
+      name="extra_{{ field.name }}"
+      value="{{ existing_data[field.name] if field.name in existing_data else '' }}"
+      {% if field.required %}required{% endif %}
+    >
+  {% endfor %}
+
+  <button type="submit">Save Changes</button>
+</form>
+
+{% endblock %}
