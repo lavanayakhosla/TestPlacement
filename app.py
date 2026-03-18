@@ -100,6 +100,16 @@ def _parse_eligible_branches(selected):
     return ",".join(branches) if branches else "ALL"
 
 
+deadline_str = request.form.get("application_deadline")
+
+if deadline_str:
+    deadline = datetime.strptime(deadline_str, "%Y-%m-%dT%H:%M")
+    
+    # 🔥 IST → UTC adjust (simple hack)
+    deadline_utc = deadline - timedelta(hours=5, minutes=30)
+else:
+    deadline_utc = None
+
 class Student(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     roll_no = db.Column(db.String(32), unique=True, nullable=False, index=True)
