@@ -1031,7 +1031,60 @@ def update_application_status(application_id: int):
     else:
         flash("Status updated. No student user/email linked for notification.")
     return redirect(url_for("applications"))
+@app.route("/exports/applicants")
+@role_required("ADMIN", "PLACEMENT_COORDINATOR")
+def export_applicants():
+    branch = request.args.get("branch", "ALL").strip().upper()
+    company_id = request.args.get("company_id")
 
+    if not company_id:
+        flash("Please select a company.")
+        return redirect(url_for("applications"))
+
+    # 🔥 JOIN Student + Application
+    query = (
+        db.session.query(Student)
+        .join(Application, Student.id == Application.student_id)
+        .filter(Application.company_id == int(company_id))
+    )
+
+    # 🔹 Apply branch filter
+    if branch != "ALL":
+        query = query.filter(Student.branch == branch)
+
+    students = query.order_by(Student.roll_no).all()
+
+    # 🔹 Build Excel
+    rows = []
+    for s in students:
+        rows.append({
+            "Roll No": s.roll_no,
+            "Name": s.name,
+            "Branch": s.branch,
+            "Semester": s.current_semester,
+            "CGPA": s.cgpa,
+            "Active Backlogs": s.total_backlogs,
+            "Dead Backlogs": getattr(s, "dead_backlogs", 0),
+            "Eligibility": s.eligibility_status,
+            "Resume Link": s.resume_link or "",
+        })
+
+    df = pd.DataFrame(rows)
+
+    output = io.BytesIO()
+    with pd.ExcelWriter(output, engine="openpyxl") as writer:
+        df.to_excel(writer, index=False, sheet_name="Applicants")
+
+    output.seek(0)
+
+    filename = f"applicants_{branch}_{datetime.utcnow().strftime('%Y%m%d%H%M%S')}.xlsx"
+
+    return send_file(
+        output,
+        mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        as_attachment=True,
+        download_name=filename,
+    )
 
 @app.route("/auth/register", methods=["GET", "POST"])
 def register():
