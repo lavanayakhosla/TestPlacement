@@ -84,7 +84,15 @@ SELECTION_POLICIES = {"BLOCKING", "NON_BLOCKING"}
 
 BRANCH_CHOICES = ["CSE", "CSE AI", "ECE", "ECE AI", "IT", "MAE", "AI ML", "DMAM"]
 
+import pytz
+from datetime import datetime
 
+IST = pytz.timezone("Asia/Kolkata")
+
+def to_ist(dt):
+    if not dt:
+        return None
+    return dt.replace(tzinfo=pytz.utc).astimezone(IST)
 def _parse_eligible_branches(selected):
     if not selected or "ALL" in (s.strip().upper() for s in selected if s):
         return "ALL"
@@ -240,7 +248,12 @@ def current_user():
         return None
     return User.query.get(user_id)
 
-
+@app.template_filter("ist")
+def ist_filter(dt):
+    dt = to_ist(dt)
+    if dt:
+        return dt.strftime("%Y-%m-%d %H:%M")
+    return ""
 @app.before_request
 def load_user():
     g.user = current_user()
