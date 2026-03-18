@@ -16,7 +16,7 @@
   <tbody>
     {% for u in updates %}
     <tr>
-      <td>{{ u.updated_at.strftime('%Y-%m-%d %H:%M') }}</td>
+      <td>{{ u.updated_at | ist }}</td>
       <td>{{ u.student.roll_no }}</td>
       <td>{{ u.student.name }}</td>
       <td>{{ u.semester_no }}</td>
