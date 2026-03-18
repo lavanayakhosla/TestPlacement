@@ -70,7 +70,7 @@
       <td>{{ c.name }}</td>
       <td>{{ c.hiring_role or "—" }}</td>
       <td>{% if c.apply_link %}<a href="{{ c.apply_link }}" target="_blank" rel="noopener noreferrer">Apply here</a>{% else %}—{% endif %}</td>
-      <td>{{ c.application_deadline.strftime('%Y-%m-%d %H:%M') if c.application_deadline else "—" }}</td>
+      <td>{{ c.application_deadline | ist if c.application_deadline else "—" }}</td>
       <td>{{ c.eligible_branches }}</td>
       <td>{{ c.min_cgpa }}</td>
       <td>{{ c.max_backlogs }}</td>
