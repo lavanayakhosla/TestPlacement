@@ -83,12 +83,12 @@
   <tbody>
     {% for a in applications %}
     <tr>
-      <td>{{ a.applied_at.strftime('%Y-%m-%d %H:%M') }}</td>
+      <td>{{ a.applied_at | ist }}</td>
       <td>{{ a.student.roll_no }} - {{ a.student.name }}</td>
       <td>{{ a.company.name }}</td>
       <td>{{ a.company.hiring_role or "—" }}</td>
       <td>{% if a.company.apply_link %}<a href="{{ a.company.apply_link }}" target="_blank" rel="noopener noreferrer">Apply here</a>{% else %}—{% endif %}</td>
-      <td>{{ a.company.application_deadline.strftime('%Y-%m-%d %H:%M') if a.company.application_deadline else "—" }}</td>
+      <td>{{ a.company.application_deadline | ist if a.company.application_deadline else "—" }}</td>
       <td>{{ a.company.selection_policy }}</td>
       <td>{{ a.status }}</td>
       <td>{{ a.student.resume_link or "Not set" }}</td>
@@ -108,7 +108,7 @@
     </form>
   {% endif %}
 </td>
-      <td>{{ a.exported_at.strftime('%Y-%m-%d %H:%M') if a.exported_at else "-" }}</td>
+      <td>{{ a.exported_at | ist if a.exported_at else "-" }}</td>
       {% if g.user.role in ["ADMIN", "PLACEMENT_COORDINATOR"] %}
       <td>
         <form action="{{ url_for('update_application_status', application_id=a.id) }}" method="post">
