@@ -1226,6 +1226,55 @@ def admin_users():
         return redirect(url_for("admin_users"))
     users = User.query.order_by(User.created_at.desc()).all()
     return render_template("admin_users.html", users=users)
+
+@app.route("/applications/<int:application_id>/edit", methods=["GET", "POST"])
+@login_required
+def edit_application(application_id: int):
+    app_entry = Application.query.get_or_404(application_id)
+
+    # 🔐 Only owner student can edit
+    if g.user.role != "STUDENT" or g.user.student_id != app_entry.student_id:
+        flash("You can edit only your own application.")
+        return redirect(url_for("applications"))
+
+    company = app_entry.company
+
+    if request.method == "POST":
+        # ✅ Update resume link
+        new_resume = request.form.get("resume_link", "").strip()
+        if new_resume:
+            app_entry.student.resume_link = new_resume
+
+        # ✅ Handle dynamic fields
+        extra_data = {}
+        fields = json.loads(company.extra_fields_json or "[]")
+
+        for field in fields:
+            key = f"extra_{field['name']}"
+            value = request.form.get(key)
+
+            if field.get("required") and not value:
+                flash(f"{field['label']} is required.")
+                return redirect(request.url)
+
+            extra_data[field["name"]] = value
+
+        app_entry.extra_data = json.dumps(extra_data)
+
+        db.session.commit()
+        flash("Application updated successfully.")
+        return redirect(url_for("applications"))
+
+    # GET request → show existing values
+    existing_data = json.loads(app_entry.extra_data or "{}")
+    fields = json.loads(company.extra_fields_json or "[]")
+
+    return render_template(
+        "edit_application.html",
+        application=app_entry,
+        fields=fields,
+        existing_data=existing_data
+    )
 @app.route("/applications/<int:application_id>/delete", methods=["POST"])
 @login_required
 def delete_application(application_id: int):
