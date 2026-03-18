@@ -784,7 +784,7 @@ def companies():
             name=request.form["name"].strip(),
             hiring_role=request.form.get("hiring_role", "").strip() or None,
             apply_link=request.form.get("apply_link", "").strip() or None,
-            application_deadline=deadline,
+            application_deadline = deadline_utc
             eligible_branches=_parse_eligible_branches(request.form.getlist("eligible_branches")),
             min_cgpa=float(request.form.get("min_cgpa", "0")),
             max_backlogs=int(request.form.get("max_backlogs", "999")),
