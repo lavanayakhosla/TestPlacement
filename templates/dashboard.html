@@ -25,4 +25,17 @@
     </ul>
   </div>
 </div>
+{% if reminders and reminders|length > 0 %}
+<div style="background:#fff3cd; padding:15px; border-radius:8px; margin-bottom:15px;">
+  <strong>⚠ Deadlines Approaching!</strong>
+  <ul>
+    {% for c in reminders %}
+      <li>
+        {{ c.name }} - Apply before 
+        {{ c.application_deadline.strftime('%Y-%m-%d') }}
+      </li>
+    {% endfor %}
+  </ul>
+</div>
+{% endif %}
 {% endblock %}
