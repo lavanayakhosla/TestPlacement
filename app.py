@@ -1468,10 +1468,8 @@ def ensure_schema_updates():
         db.session.execute(text("ALTER TABLE company ADD COLUMN application_deadline TIMESTAMP"))
         db.session.commit()
     if "allow_dead_backlogs" not in company_cols:
-    db.session.execute(
-        text("ALTER TABLE company ADD COLUMN allow_dead_backlogs BOOLEAN DEFAULT 1")
-    )
-    db.session.commit()
+        db.session.execute(text("ALTER TABLE company ADD COLUMN allow_dead_backlogs BOOLEAN DEFAULT 1"))
+        db.session.commit()
 
     sem_perf_cols = {col["name"] for col in inspector.get_columns("semester_performance")}
     if "semester_credits" not in sem_perf_cols:
