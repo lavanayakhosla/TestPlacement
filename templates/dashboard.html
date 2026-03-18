@@ -32,7 +32,7 @@
     {% for c in reminders %}
       <li>
         {{ c.name }} - Apply before 
-        {{ c.application_deadline.strftime('%Y-%m-%d') }}
+        {{ c.application_deadline | ist }}
       </li>
     {% endfor %}
   </ul>
