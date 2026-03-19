@@ -846,7 +846,12 @@ def applications():
             return redirect(url_for("applications"))
 
         if company.application_deadline and datetime.utcnow() > company.application_deadline:
-            flash(f"Application deadline for {company.name} has passed ({company.application_deadline.strftime('%Y-%m-%d %H:%M')} UTC).")
+            deadline_ist = to_ist(company.application_deadline)
+
+            flash(
+                f"Application deadline for {company.name} has passed "
+                f"({deadline_ist.strftime('%Y-%m-%d %H:%M')} IST)."
+            )
             return redirect(url_for("applications"))
 
         if not student.resume_link:
