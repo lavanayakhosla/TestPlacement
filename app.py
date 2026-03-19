@@ -163,7 +163,7 @@ class Company(db.Model):
     max_backlogs = db.Column(db.Integer, default=999, nullable=False)
     allow_dead_backlogs = db.Column(db.Boolean, default=True)
     selection_policy = db.Column(db.String(32), default="NON_BLOCKING", nullable=False)
-    export_template_json = db.Column(db.Text, nullable=False, default="[]")
+    extra_fields_json = db.Column(db.Text, nullable=False, default="[]")
    
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     applications = db.relationship("Application", backref="company", lazy=True)
@@ -189,7 +189,7 @@ class Application(db.Model):
     student_id = db.Column(db.Integer, db.ForeignKey("student.id"), nullable=False, index=True)
     company_id = db.Column(db.Integer, db.ForeignKey("company.id"), nullable=False, index=True)
     status = db.Column(db.String(32), default="APPLIED", nullable=False)
-   
+    extra_data = db.Column(db.Text, nullable=True)
     applied_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     exported_at = db.Column(db.DateTime, nullable=True)
 
@@ -764,6 +764,15 @@ def companies():
         except Exception:
             flash("Invalid export template JSON.")
             return redirect(url_for("companies"))
+        extra_fields_json = request.form.get("extra_fields_json", "[]").strip()
+
+        try:
+            parsed_fields = json.loads(extra_fields_json)
+            if not isinstance(parsed_fields, list):
+                raise ValueError()
+        except:
+            flash("Invalid Extra Fields JSON")
+            return redirect(url_for("companies"))
 
         import pytz
 
@@ -792,6 +801,7 @@ def companies():
             allow_dead_backlogs=allow_dead,
             selection_policy=selection_policy,
             export_template_json=template_text,
+            extra_fields_json=extra_fields_json,
         )
         db.session.add(company)
         db.session.commit()
@@ -867,7 +877,11 @@ def applications():
     else:
         students = Student.query.order_by(Student.roll_no).all()
     companies = Company.query.order_by(Company.name).all()
-    return render_template("applications.html", applications=apps, students=students, companies=companies)
+    company_fields = {
+        c.id: json.loads(c.extra_fields_json or "[]")
+        for c in companies
+    }
+    return render_template("applications.html", applications=apps, students=students, companies=companies, company_fields=company_fields)
 
 
 @app.route("/imports/sgpa", methods=["GET", "POST"])
@@ -1554,6 +1568,11 @@ def ensure_schema_updates():
         db.session.execute(text("ALTER TABLE student ADD COLUMN dead_backlogs INTEGER DEFAULT 0"))
         db.session.commit()
 
+    application_cols = {col["name"] for col in inspector.get_columns("application")}
+    if "extra_data" not in application_cols:
+        db.session.execute(text("ALTER TABLE application ADD COLUMN extra_data TEXT"))
+        db.session.commit()
+
 
 
 
@@ -1577,6 +1596,9 @@ def ensure_schema_updates():
         db.session.commit()
     if "allow_dead_backlogs" not in company_cols:
         db.session.execute(text("ALTER TABLE company ADD COLUMN allow_dead_backlogs BOOLEAN DEFAULT TRUE"))
+        db.session.commit()
+    if "extra_fields_json" not in company_cols:
+        db.session.execute(text("ALTER TABLE company ADD COLUMN extra_fields_json TEXT DEFAULT '[]'"))
         db.session.commit()
 
     sem_perf_cols = {col["name"] for col in inspector.get_columns("semester_performance")}
