@@ -92,7 +92,9 @@ IST = pytz.timezone("Asia/Kolkata")
 def to_ist(dt):
     if not dt:
         return None
-    return dt.replace(tzinfo=pytz.utc).astimezone(IST)
+    if dt.tzinfo is None:
+        dt = pytz.utc.localize(dt)
+    return dt.astimezone(IST)
 def _parse_eligible_branches(selected):
     if not selected or "ALL" in (s.strip().upper() for s in selected if s):
         return "ALL"
@@ -100,15 +102,6 @@ def _parse_eligible_branches(selected):
     return ",".join(branches) if branches else "ALL"
 
 
-deadline_str = request.form.get("application_deadline")
-
-if deadline_str:
-    deadline = datetime.strptime(deadline_str, "%Y-%m-%dT%H:%M")
-    
-    # 🔥 IST → UTC adjust (simple hack)
-    deadline_utc = deadline - timedelta(hours=5, minutes=30)
-else:
-    deadline_utc = None
 
 class Student(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -772,13 +765,21 @@ def companies():
             flash("Invalid export template JSON.")
             return redirect(url_for("companies"))
 
-        deadline = None
-        raw_deadline = request.form.get("application_deadline", "").strip()
+        import pytz
+
+        IST = pytz.timezone("Asia/Kolkata")
+
+        deadline_utc = None
+        raw_deadline = request.form.get("application_deadline")
+
         if raw_deadline:
-            try:
-                deadline = datetime.strptime(raw_deadline, "%Y-%m-%d").replace(hour=23, minute=59, second=59, microsecond=0)
-            except ValueError:
-                pass
+            naive_dt = datetime.strptime(raw_deadline, "%Y-%m-%dT%H:%M")
+    
+    # treat input as IST
+            ist_dt = IST.localize(naive_dt)
+
+    # convert to UTC for DB
+            deadline_utc = ist_dt.astimezone(pytz.utc)
         allow_dead = request.form.get("allow_dead_backlogs") == "on"
         company = Company(
             name=request.form["name"].strip(),
