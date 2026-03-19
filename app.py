@@ -165,7 +165,7 @@ class Company(db.Model):
     selection_policy = db.Column(db.String(32), default="NON_BLOCKING", nullable=False)
     extra_fields_json = db.Column(db.Text, nullable=False, default="[]")
     extra_fields = db.Column(JSON, default=[]) 
-   
+    export_template_json = db.Column(db.Text, default="[]") 
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     applications = db.relationship("Application", backref="company", lazy=True)
 
@@ -1630,6 +1630,10 @@ def ensure_schema_updates():
     if "extra_fields" not in company_cols:
         db.session.execute(text("ALTER TABLE company ADD COLUMN extra_fields TEXT DEFAULT '[]'"))
         db.session.commit()
+    if "export_template_json" not in company_cols:
+        db.session.execute(text("ALTER TABLE company ADD COLUMN  export_template_json TEXT DEFAULT '[]'"))
+        db.session.commit()
+       
 
     sem_perf_cols = {col["name"] for col in inspector.get_columns("semester_performance")}
     if "semester_credits" not in sem_perf_cols:
