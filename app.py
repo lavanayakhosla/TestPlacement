@@ -851,11 +851,9 @@ def applications():
         if not student.resume_link:
             flash("No resume link found for this student. Add resume link first.")
             return redirect(url_for("applications"))
-
-       fields = json.loads(company.extra_fields_json or "[]")
-       extra_data = {}
-
-       for field in fields:
+        fields = json.loads(company.extra_fields_json or "[]")
+        extra_data = {}
+        for field in fields:
             key = f"extra_{field['name']}"
             value = request.form.get(key)
 
@@ -870,11 +868,12 @@ def applications():
 
             extra_data[field["name"]] = value
 
-        app_entry.extra_data = json.dumps(extra_data)
+       
 
         app_entry = Application(
             student_id=student.id,
             company_id=company.id,
+            extra_data=json.dumps(extra_data)
            
         )
         db.session.add(app_entry)
