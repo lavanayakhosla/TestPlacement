@@ -1622,6 +1622,9 @@ def ensure_schema_updates():
     if "extra_fields_json" not in company_cols:
         db.session.execute(text("ALTER TABLE company ADD COLUMN extra_fields_json TEXT DEFAULT '[]'"))
         db.session.commit()
+    if "extra_fields" not in company_cols:
+        db.session.execute(text("ALTER TABLE company ADD COLUMN extra_fields TEXT DEFAULT '[]'"))
+        db.session.commit()
 
     sem_perf_cols = {col["name"] for col in inspector.get_columns("semester_performance")}
     if "semester_credits" not in sem_perf_cols:
