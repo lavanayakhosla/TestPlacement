@@ -22,11 +22,13 @@
       {% endif %}
       <label>Company</label>
       <select name="company_id" required>
+          <div id="dynamic-fields"></div>
         <option value="">Select</option>
         {% for c in companies %}
         <option value="{{ c.id }}">{{ c.name }}</option>
         {% endfor %}
       </select>
+    
       <button type="submit">Submit Application</button>
     </form>
   </div>
@@ -128,4 +130,42 @@
     {% endfor %}
   </tbody>
 </table>
+<script>
+const companyFields = {{ company_fields | tojson }};
+
+function loadFields(companyId) {
+    const container = document.getElementById("dynamic-fields");
+    container.innerHTML = "";
+
+    const fields = companyFields[companyId] || [];
+
+    fields.forEach(field => {
+        let html = `<label>${field.label}</label>`;
+
+        if (field.type === "text" || field.type === "number") {
+            html += `<input type="${field.type}" name="extra_${field.name}" ${field.required ? "required" : ""}>`;
+        }
+
+        else if (field.type === "textarea") {
+            html += `<textarea name="extra_${field.name}" ${field.required ? "required" : ""}></textarea>`;
+        }
+
+        else if (field.type === "select") {
+            html += `<select name="extra_${field.name}" ${field.required ? "required" : ""}>`;
+            html += `<option value="">-- Select --</option>`;
+            field.options.forEach(opt => {
+                html += `<option value="${opt}">${opt}</option>`;
+            });
+            html += `</select>`;
+        }
+
+        container.innerHTML += html;
+    });
+}
+
+// trigger on company change
+document.querySelector('select[name="company_id"]').addEventListener("change", function() {
+    loadFields(this.value);
+});
+</script>
 {% endblock %}
