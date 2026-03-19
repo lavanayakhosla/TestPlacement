@@ -852,7 +852,25 @@ def applications():
             flash("No resume link found for this student. Add resume link first.")
             return redirect(url_for("applications"))
 
-      
+       fields = json.loads(company.extra_fields_json or "[]")
+       extra_data = {}
+
+       for field in fields:
+            key = f"extra_{field['name']}"
+            value = request.form.get(key)
+
+            if field.get("required") and not value:
+                flash(f"{field['label']} is required")
+                return redirect(url_for("applications"))
+
+            if field["type"] == "select":
+                if value and value not in field.get("options", []):
+                    flash(f"Invalid value for {field['label']}")
+                    return redirect(url_for("applications"))
+
+            extra_data[field["name"]] = value
+
+        app_entry.extra_data = json.dumps(extra_data)
 
         app_entry = Application(
             student_id=student.id,
@@ -1042,6 +1060,10 @@ def export_company(company_id: int):
             header = col.get("header", "Unknown")
             source = col.get("source", "")
             row[header] = resolve_source(source, app_entry)
+        extra = json.loads(app_entry.extra_data or "{}")
+        for k, v in extra.items():
+            row[k] = v
+
         rows.append(row)
         app_entry.exported_at = datetime.utcnow()
 
