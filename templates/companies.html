@@ -37,6 +37,15 @@
   {"header":"Resume Link","source":"student.resume_link"},
   {"header":"Applied On","source":"application.applied_at"}
 ]</textarea>
+
+<label>Extra Fields (JSON)</label>
+<textarea name="extra_fields_json" rows="8">[
+  {"name":"tenth_percentage","label":"10th %","type":"number","required":true},
+  {"name":"twelfth_percentage","label":"12th %","type":"number"},
+  {"name":"gender","label":"Gender","type":"select","options":["Male","Female","Other"],"required":true},
+  {"name":"internships","label":"Internships","type":"textarea"}
+]</textarea>
+      
       <button type="submit">Add Company</button>
     </form>
   </div>
