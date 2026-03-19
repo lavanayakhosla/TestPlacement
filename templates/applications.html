@@ -22,12 +22,13 @@
       {% endif %}
       <label>Company</label>
       <select name="company_id" required>
-          <div id="dynamic-fields"></div>
+    
         <option value="">Select</option>
         {% for c in companies %}
         <option value="{{ c.id }}">{{ c.name }}</option>
         {% endfor %}
       </select>
+            <div id="dynamic-fields"></div>
     
       <button type="submit">Submit Application</button>
     </form>
