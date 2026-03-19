@@ -164,6 +164,7 @@ class Company(db.Model):
     allow_dead_backlogs = db.Column(db.Boolean, default=True)
     selection_policy = db.Column(db.String(32), default="NON_BLOCKING", nullable=False)
     extra_fields_json = db.Column(db.Text, nullable=False, default="[]")
+    extra_fields = db.Column(JSON, default=[]) 
    
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     applications = db.relationship("Application", backref="company", lazy=True)
