@@ -165,8 +165,18 @@ function loadFields(companyId) {
 }
 
 // trigger on company change
-document.querySelector('select[name="company_id"]').addEventListener("change", function() {
-    loadFields(this.value);
+const companySelect = document.querySelector('select[name="company_id"]');
+
+if (companySelect) {
+    companySelect.addEventListener("change", function() {
+        loadFields(this.value);
+    });
+}
+window.addEventListener("DOMContentLoaded", () => {
+    const companySelect = document.querySelector('select[name="company_id"]');
+    if (companySelect && companySelect.value) {
+        loadFields(companySelect.value);
+    }
 });
 </script>
 {% endblock %}
