@@ -95,13 +95,17 @@
       <td>{% if a.company.apply_link %}<a href="{{ a.company.apply_link }}" target="_blank" rel="noopener noreferrer">Apply here</a>{% else %}—{% endif %}</td>
       <td>{{ a.company.application_deadline | ist if a.company.application_deadline else "—" }}</td>
       {% set extra = a.extra_data %}
-      <td>
-  {% if a.extra_data %}
+     <td>
+  {% if a.extra_data is mapping %}
+    {# extra_data is a dictionary #}
     {% for key, value in a.extra_data.items() %}
       <div><b>{{ key }}:</b> {{ value }}</div>
     {% endfor %}
+  {% elif a.extra_data %}
+    {# extra_data is a string or other non-empty value #}
+    {{ a.extra_data }}
   {% else %}
-    —
+    &mdash; {# empty or None #}
   {% endif %}
 </td>
       <td>{{ a.company.selection_policy }}</td>
