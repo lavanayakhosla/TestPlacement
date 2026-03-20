@@ -106,7 +106,7 @@
       <div>{% if a.company.apply_link %}<a href="{{ a.company.apply_link }}" target="_blank" rel="noopener noreferrer">Apply here</a>{% else %}Company Link - No link{% endif %}</div>
       <div><b>Company Policy:</b> {{ a.company.selection_policy }}</div>
       <div><b>Status:</b> {{ a.status }}</div>
-      <div><b>Resume Link:</b> {{ a.student.resume_link or "Not set" }}</div>
+      <div><b>Resume Link:</b> {{ a.resume_link or a.student.resume_link or "Not set" }}</div>
       <div><b>Applied At:</b> {{ a.applied_at | ist }}</div>
       <div><b>Exported At:</b> {{ a.exported_at | ist if a.exported_at else "-" }}</div>
 
