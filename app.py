@@ -1463,7 +1463,7 @@ def edit_application(application_id: int):
         # ✅ Update resume link
         new_resume = request.form.get("resume_link", "").strip()
         if new_resume:
-            app_entry.student.resume_link = new_resume
+            app_entry.resume_link = new_resume
 
         # ✅ Handle dynamic fields
         extra_data = {}
