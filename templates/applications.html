@@ -90,17 +90,22 @@
   <button type="button" class="toggle-actions" onclick="toggleActions({{ a.id }})">Actions</button>
   <div id="actions-{{ a.id }}" style="display:none; margin-top:5px; border:1px solid #ccc; padding:5px; border-radius:4px;">
     <div>
-  <b>Details:</b>  {% set extra = a.extra_data %}
-      {% if a.extra_data is mapping %}
-          {% for key, value in a.extra_data.items() %}
-              <div><b>{{ key.replace('_', ' ').title() }}:</b> {{ value }}</div>
-          {% endfor %}
-      {% elif a.extra_data %}
-          <div>{{ a.extra_data }}</div>
-      {% else %}
-          <div>&mdash;</div>
-      {% endif %}
-    </div>
+  <b>Details:</b>
+  {% set extra = a.extra_data %}
+  {% if extra is string %}
+    {% set extra = extra | fromjson %}
+  {% endif %}
+
+  {% if extra is mapping %}
+      {% for key, value in extra.items() %}
+          <div style="margin-left:10px;"><b>{{ key.replace('_', ' ').title() }}:</b> {{ value }}</div>
+      {% endfor %}
+  {% elif extra %}
+      <div style="margin-left:10px;">{{ extra }}</div>
+  {% else %}
+      <div style="margin-left:10px;">&mdash;</div>
+  {% endif %}
+</div>
       <div>{% if a.company.apply_link %}<a href="{{ a.company.apply_link }}" target="_blank" rel="noopener noreferrer">Apply here</a>{% else %}Company Link - No link{% endif %}</div>
       <div><b>Company Policy:</b> {{ a.company.selection_policy }}</div>
       <div><b>Status:</b> {{ a.status }}</div>
