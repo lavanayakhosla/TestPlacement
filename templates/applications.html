@@ -99,7 +99,7 @@
   {% if a.extra_data is mapping %}
     {# extra_data is a dictionary #}
     {% for key, value in a.extra_data.items() %}
-      <div><b>{{ key }}:</b> {{ value }}</div>
+      <div><b>{{ key.replace('_', ' ').title() }}:</b> {{ value }}</div>
     {% endfor %}
   {% elif a.extra_data %}
     {# extra_data is a string or other non-empty value #}
