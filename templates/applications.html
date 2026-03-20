@@ -72,8 +72,10 @@
       <th>Role</th>
       <th>Apply at Company</th>
       <th>Deadline</th>
+      <th>Extra Details</th>
       <th>Company Policy</th>
       <th>Status</th>
+    
       <th>Resume Link</th>
       <th>Edit</th>
       <th>Delete</th>
@@ -96,6 +98,16 @@
       <td>{{ a.company.selection_policy }}</td>
       <td>{{ a.status }}</td>
       <td>{{ a.student.resume_link or "Not set" }}</td>
+      {% set extra = a.extra_data %}
+      <td>
+  {% if a.extra_data %}
+    {% for key, value in a.extra_data.items() %}
+      <div><b>{{ key }}:</b> {{ value }}</div>
+    {% endfor %}
+  {% else %}
+    —
+  {% endif %}
+</td>
       <td>
   {% if g.user.role == "STUDENT" %}
     <a href="{{ url_for('edit_application', application_id=a.id) }}">
