@@ -92,10 +92,7 @@
     <div>
   <b>Details:</b>
   {% set extra = a.extra_data %}
-  {% if extra is string %}
-    {% set extra = extra | fromjson %}
-  {% endif %}
-
+  
   {% if extra is mapping %}
       {% for key, value in extra.items() %}
           <div style="margin-left:10px;"><b>{{ key.replace('_', ' ').title() }}:</b> {{ value }}</div>
