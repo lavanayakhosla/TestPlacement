@@ -85,7 +85,7 @@ SELECTION_POLICIES = {"BLOCKING", "NON_BLOCKING"}
 BRANCH_CHOICES = ["CSE", "CSE AI", "ECE", "ECE AI", "IT", "MAE", "AI ML", "DMAM"]
 
 import pytz
-from datetime import datetime
+
 
 IST = pytz.timezone("Asia/Kolkata")
 
@@ -193,7 +193,7 @@ class Application(db.Model):
     extra_data = db.Column(db.Text, nullable=True)
     applied_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     exported_at = db.Column(db.DateTime, nullable=True)
-
+    resume_link = db.Column(db.String(1024), nullable=True)
     __table_args__ = (
         db.UniqueConstraint("student_id", "company_id", name="uniq_student_company"),
     )
@@ -645,7 +645,7 @@ def resolve_source(source: str, application: Application):
         "company.hiring_role": (application.company.hiring_role or "").strip(),
         "company.apply_link": (application.company.apply_link or "").strip(),
         "company.application_deadline": application.company.application_deadline.strftime("%Y-%m-%d %H:%M") if application.company.application_deadline else "",
-        "resume.link": student.resume_link or "",
+        "resume.link": application.resume_link or student.resume_link or "",
         "resume.path": student.resume_link or "",
         "resume.filename": student.resume_link or "",
     }
@@ -879,8 +879,8 @@ def applications():
         app_entry = Application(
             student_id=student.id,
             company_id=company.id,
-            extra_data=json.dumps(extra_data)
-           
+            extra_data=json.dumps(extra_data),
+            resume_link=student.resume_link
         )
         db.session.add(app_entry)
         db.session.commit()
@@ -1150,9 +1150,13 @@ def export_applicants():
 
     students = query.order_by(Student.roll_no).all()
 
+
+        
+
     # 🔹 Build Excel
     rows = []
     for s in students:
+        app_entry = Application.query.filter_by(student_id=s.id, company_id=int(company_id)).first()
         rows.append({
             "Roll No": s.roll_no,
             "Name": s.name,
@@ -1162,7 +1166,8 @@ def export_applicants():
             "Active Backlogs": s.total_backlogs,
             "Dead Backlogs": getattr(s, "dead_backlogs", 0),
             "Eligibility": s.eligibility_status,
-            "Resume Link": s.resume_link or "",
+            
+            "Resume Link": app_entry.resume_link if app_entry and app_entry.resume_link else s.resume_link or "",
         })
 
     df = pd.DataFrame(rows)
@@ -1598,6 +1603,9 @@ def ensure_schema_updates():
     application_cols = {col["name"] for col in inspector.get_columns("application")}
     if "extra_data" not in application_cols:
         db.session.execute(text("ALTER TABLE application ADD COLUMN extra_data TEXT"))
+        db.session.commit()
+    if "resume_link" not in application_cols:
+        db.session.execute(text("ALTER TABLE application ADD COLUMN resume_link VARCHAR(1024)"))
         db.session.commit()
 
 
