@@ -75,7 +75,6 @@
       <th>Extra Details</th>
       <th>Company Policy</th>
       <th>Status</th>
-    
       <th>Resume Link</th>
       <th>Edit</th>
       <th>Delete</th>
@@ -95,9 +94,6 @@
       <td>{{ a.company.hiring_role or "—" }}</td>
       <td>{% if a.company.apply_link %}<a href="{{ a.company.apply_link }}" target="_blank" rel="noopener noreferrer">Apply here</a>{% else %}—{% endif %}</td>
       <td>{{ a.company.application_deadline | ist if a.company.application_deadline else "—" }}</td>
-      <td>{{ a.company.selection_policy }}</td>
-      <td>{{ a.status }}</td>
-      <td>{{ a.student.resume_link or "Not set" }}</td>
       {% set extra = a.extra_data %}
       <td>
   {% if a.extra_data %}
@@ -108,6 +104,10 @@
     —
   {% endif %}
 </td>
+      <td>{{ a.company.selection_policy }}</td>
+      <td>{{ a.status }}</td>
+      <td>{{ a.student.resume_link or "Not set" }}</td>
+      
       <td>
   {% if g.user.role == "STUDENT" %}
     <a href="{{ url_for('edit_application', application_id=a.id) }}">
