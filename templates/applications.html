@@ -38,6 +38,7 @@
     <p>System blocks application when branch/CGPA/backlog criteria do not match company rules.</p>
   </div>
 </div>
+{% if g.user.role in ["ADMIN", "PLACEMENT_COORDINATOR"] %}
 <h3>Download Applicants</h3>
 
 <form method="get" action="{{ url_for('export_applicants') }}">
@@ -61,7 +62,9 @@
   </select>
 
   <button type="submit">Download Applicants</button>
-</form>
+  </form>
+  {%endif%}
+
 <h3>Submitted Applications</h3>
 <table>
   <thead>
