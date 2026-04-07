@@ -1,13 +1,28 @@
 {% extends "base.html" %}
 {% block content %}
-<h1>Login</h1>
-<div class="card" style="max-width: 420px;">
-  <form method="post">
-    <input type="email" name="email" placeholder="Email" required>
-    <input type="password" name="password" placeholder="Password" required>
-    <button type="submit">Login</button>
-  </form>
-  <p><a href="{{ url_for('forgot_password') }}">Forgot password?</a></p>
-  <p>New user? <a href="{{ url_for('register') }}">Register here</a> (email verification with OTP required).</p>
+<div class="auth-wrapper">
+  
+  <div class="auth-content">
+    <h1 style="color: var(--primary); text-align: center; margin-bottom: 8px;">Campus Placement Portal</h1>
+    <h2 style="color: var(--text-dark); text-align: center; font-size: 1.25rem; margin-bottom: 32px; font-weight: 500;">Welcome Back</h2>
+    
+    <div style="width: 100%; max-width: 360px;">
+      <form method="post">
+        <input type="email" name="email" placeholder="Email Address" required>
+        <input type="password" name="password" placeholder="Password" required>
+        <button type="submit">Login</button>
+      </form>
+      
+      <div class="auth-links">
+        <p><a href="{{ url_for('forgot_password') }}">Forgot password?</a></p>
+        <p style="margin-top: 12px;">New user? <a href="{{ url_for('register') }}">Register here</a></p>
+        <p style="font-size: 0.8rem; margin-top: 4px;">(Email verification with OTP required)</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="auth-image" aria-label="Campus Background Image">
+      </div>
+
 </div>
 {% endblock %}
