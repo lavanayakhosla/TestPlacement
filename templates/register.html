@@ -1,42 +1,70 @@
 {% extends "base.html" %}
 {% block content %}
-<h1>Register</h1>
-<div class="grid grid-2">
-  <div class="card">
+<h1 style="text-align: center;">Register</h1>
+<div class="grid grid-2" style="display: flex; flex-direction: column; gap: 20px; align-items: center;">
+  
+  <div class="card" style="width: 100%; max-width: 500px;">
     <h3>Create Account</h3>
     <form method="post">
-      <input type="email" name="email" placeholder="Email" required>
-      <input type="password" name="password" placeholder="Password (min 8 chars)" required>
+      
+      <div class="form-group">
+        <label>Email</label>
+        <input type="email" name="email" placeholder="Email" required>
+      </div>
+      
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" name="password" placeholder="Password (min 8 chars)" required>
+      </div>
+
       {% if g.user and g.user.role == "ADMIN" %}
-        <label>Role</label>
-        <select name="role" id="roleSelect" onchange="toggleStudentFields()">
-          <option value="STUDENT">Student</option>
-          <option value="PLACEMENT_COORDINATOR">Placement Coordinator</option>
-          <option value="ADMIN">Admin</option>
-        </select>
+        <div class="form-group">
+          <label>Role</label>
+          <select name="role" id="roleSelect" onchange="toggleStudentFields()">
+            <option value="STUDENT">Student</option>
+            <option value="PLACEMENT_COORDINATOR">Placement Coordinator</option>
+            <option value="ADMIN">Admin</option>
+          </select>
+        </div>
       {% else %}
         <input type="hidden" name="role" id="roleSelect" value="STUDENT">
       {% endif %}
 
       <div id="studentFields">
-        <input name="roll_no" placeholder="Roll No">
-        <input name="name" placeholder="Full Name">
-        <label>Branch</label>
-        <select name="branch">
-          <option value="">Select branch</option>
-          {% for b in branch_choices %}<option value="{{ b }}">{{ b }}</option>{% endfor %}
-        </select>
-        <label><input type="checkbox" name="is_lateral_entry"> Lateral Entry</label>
+        <div class="form-group">
+          <label>Roll No</label>
+          <input name="roll_no" placeholder="Roll No">
+        </div>
+        
+        <div class="form-group">
+          <label>Full Name</label>
+          <input name="name" placeholder="Full Name">
+        </div>
+        
+        <div class="form-group">
+          <label>Branch</label>
+          <select name="branch">
+            <option value="">Select branch</option>
+            {% for b in branch_choices %}<option value="{{ b }}">{{ b }}</option>{% endfor %}
+          </select>
+        </div>
+        
+        <label style="display: flex; align-items: center; gap: 8px; margin-bottom: 20px; cursor: pointer; color: var(--text-light); font-size: 0.9rem;">
+          <input type="checkbox" name="is_lateral_entry" style="width: auto; margin: 0; cursor: pointer;"> 
+          Lateral Entry
+        </label>
       </div>
 
       <button type="submit">Create Account</button>
     </form>
   </div>
-  <div class="card">
+  
+  <div class="card" style="width: 100%; max-width: 500px; text-align: center;">
     <h3>Verification</h3>
-    <p>After registration, OTP is sent to email for account verification.</p>
+    <p style="color: var(--text-muted); font-size: 0.95rem;">After registration, an OTP is sent to your email for account verification.</p>
   </div>
 </div>
+
 <script>
 function toggleStudentFields() {
   const roleElem = document.getElementById("roleSelect");
@@ -44,6 +72,7 @@ function toggleStudentFields() {
   const box = document.getElementById("studentFields");
   box.style.display = role === "STUDENT" ? "block" : "none";
 }
+// Run on page load
 toggleStudentFields();
 </script>
 {% endblock %}
