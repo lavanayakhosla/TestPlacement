@@ -1,298 +1,52 @@
-<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Campus Placement Portal</title>
+{% extends "base.html" %}
+{% block content %}
+
+<div class="login-layout">
   
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,600&family=Plus+Jakarta+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
-
-  <style>
-    /* CSS Variables for Deep, Glowing Theme */
-    :root {
-      --primary: #0284c7;
-      --primary-hover: #0369a1;
-      --primary-glow: #38bdf8;
-      --bg-gradient: radial-gradient(circle at 30% 50%, #0f172a 0%, #020617 100%);
-      --nav-bg: rgba(15, 23, 42, 0.6);
-      --text-light: #f8fafc;
-      --text-muted: #94a3b8;
-      --input-bg: rgba(255, 255, 255, 0.05);
-      --border-color: rgba(255, 255, 255, 0.3);
-    }
-
-    /* Global Reset & Typography */
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
+  <div class="login-left">
+    <h1>Campus Placement<br>Portal</h1>
     
-    body { 
-      font-family: 'Plus Jakarta Sans', system-ui, sans-serif; 
-      background: var(--bg-gradient); 
-      color: var(--text-light); 
-      line-height: 1.6;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      /* Subtle network background pattern image can be added here */
-      background-image: radial-gradient(circle at 30% 50%, rgba(14, 165, 233, 0.1) 0%, transparent 50%);
-    }
-
-    h1, h2, h3 { 
-      font-family: 'Playfair Display', serif; /* Fancy Font for Headers */
-      margin-bottom: 16px; 
-      color: #e0f2fe;
-      font-weight: 600;
-      letter-spacing: 0.5px;
-    }
-
-    /* Glass Navigation */
-    nav {
-      background: var(--nav-bg);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-      padding: 16px 24px;
-      display: flex;
-      flex-wrap: wrap;
-      gap: 12px;
-      align-items: center;
-      justify-content: center;
-      border-bottom: 1px solid rgba(255,255,255,0.1);
-    }
-
-    nav a {
-      color: var(--text-light);
-      text-decoration: none;
-      font-size: 0.9rem;
-      font-weight: 500;
-      padding: 8px 16px;
-      border: 1px solid rgba(255,255,255,0.15);
-      border-radius: 0px; /* Sharp corners globally */
-      background: rgba(255,255,255,0.02);
-      transition: all 0.3s ease;
-    }
-
-    nav a:hover {
-      background: var(--primary);
-      border-color: var(--primary-glow);
-      box-shadow: 0 0 15px rgba(2, 132, 199, 0.4);
-    }
-
-    /* Main Container */
-    main { 
-      flex: 1;
-      width: 100%;
-      max-width: 1200px; 
-      margin: 32px auto; 
-      padding: 0 24px; 
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-    }
-
-    /* Form Elements - Floating & Sharp */
-    .form-group {
-      margin-bottom: 20px;
-      text-align: left;
-    }
-
-    .form-group label {
-      display: block;
-      font-size: 0.85rem;
-      color: var(--text-light);
-      margin-bottom: 6px;
-      font-weight: 500;
-      letter-spacing: 0.5px;
-    }
-
-    input, select, textarea {
-      width: 100%; 
-      padding: 12px 16px; 
-      background: var(--input-bg);
-      border: 1px solid var(--border-color); 
-      border-radius: 0px; /* SHARP BORDERS */
-      color: var(--text-light);
-      font-size: 1rem;
-      font-family: inherit;
-      transition: all 0.3s ease;
-    }
-
-    input::placeholder {
-      color: rgba(255, 255, 255, 0.4);
-    }
-
-    input:focus, select:focus, textarea:focus {
-      outline: none;
-      border-color: var(--primary-glow);
-      background: rgba(255, 255, 255, 0.08);
-      box-shadow: 0 0 10px rgba(56, 189, 248, 0.2);
-    }
-
-    button { 
-      background: linear-gradient(135deg, var(--primary), #020617);
-      color: #fff; 
-      border: 1px solid var(--primary-glow); 
-      font-size: 1.05rem;
-      font-weight: 600; 
-      padding: 14px 24px;
-      border-radius: 0px; /* SHARP BORDERS */
-      cursor: pointer; 
-      transition: all 0.3s ease;
-      width: 100%;
-      letter-spacing: 1px;
-      text-transform: uppercase;
-      margin-top: 10px;
-    }
-
-    button:hover { 
-      background: var(--primary-hover);
-      box-shadow: 0 0 15px rgba(2, 132, 199, 0.5);
-    }
-
-    /* Links inside forms */
-    .auth-links {
-      margin-top: 24px;
-      text-align: center;
-      font-size: 0.9rem;
-      color: var(--text-muted);
-    }
+    <div class="icon-placeholder">🎓 📈</div>
     
-    .auth-links a {
-      color: var(--primary-glow);
-      text-decoration: none;
-      font-weight: 500;
-      transition: color 0.2s;
-    }
+    <p>Good Morning, Campus Professional.<br>Ready to find your dream role?</p>
+  </div>
 
-    .auth-links a:hover {
-      color: #fff;
-      text-shadow: 0 0 8px rgba(255,255,255,0.4);
-    }
+  <div class="login-right">
+    <form method="post">
+      
+      <div class="form-group">
+        <label>Campus ID</label>
+        <input type="text" name="campus_id" placeholder="Campus ID (Optional)">
+      </div>
 
-    /* Alerts / Flash Messages */
-    .flash { 
-      background: rgba(6, 182, 212, 0.1); 
-      border-left: 4px solid var(--primary-glow); 
-      padding: 12px 16px; 
-      border-radius: 0; 
-      margin-bottom: 24px; 
-      color: #e0f2fe;
-      backdrop-filter: blur(5px);
-    }
+      <div class="form-group">
+        <label>Email</label>
+        <input type="email" name="email" placeholder="manasviahuja21@gmail.com" required>
+      </div>
 
-    /* Layout specific for Login */
-    .login-layout {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 40px;
-      margin-top: 4vh;
-    }
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" name="password" placeholder="••••••••••••" required>
+      </div>
 
-    .login-left {
-      text-align: center;
-      flex: 1;
-    }
+      <div class="form-options">
+        <label>
+          <input type="checkbox" name="remember">
+          Remember Me
+        </label>
+        <a href="{{ url_for('forgot_password') }}" style="color: var(--primary-glow); text-decoration: none;">Forgot password?</a>
+      </div>
 
-    .login-left h1 {
-      font-size: 2.8rem;
-      background: linear-gradient(to right, #e0f2fe, #7dd3fc);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      margin-bottom: 10px;
-    }
-
-    .login-left p {
-      font-size: 1.1rem;
-      color: var(--text-muted);
-      font-weight: 300;
-    }
-
-    .icon-placeholder {
-      font-size: 4rem;
-      margin: 20px 0;
-      filter: drop-shadow(0 0 20px rgba(56, 189, 248, 0.3));
-    }
-
-    .login-right {
-      flex: 1;
-      width: 100%;
-      max-width: 420px;
-      padding: 20px;
-    }
-
-    .form-options {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-size: 0.85rem;
-      margin-bottom: 20px;
-    }
-
-    .form-options label {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      cursor: pointer;
-      color: var(--text-muted);
-    }
-
-    .form-options input[type="checkbox"] {
-      width: auto;
-      margin: 0;
-    }
-
-    @media (min-width: 860px) {
-      .login-layout {
-        flex-direction: row;
-        justify-content: space-between;
-        align-items: center;
-        gap: 80px;
-      }
-      .login-left {
-        text-align: left;
-      }
-    }
-  </style>
-</head>
-<body>
-  <nav>
-    {% if g.user %}
-      <a href="{{ url_for('dashboard') }}">Dashboard</a>
-      <a href="{{ url_for('applications') }}">Applications</a>
-      {% if g.user.role == 'STUDENT' %}
-        <a href="{{ url_for('profile') }}">My Profile</a>
-      {% endif %}
-      {% if g.user.role in ['ADMIN', 'PLACEMENT_COORDINATOR'] %}
-        <a href="{{ url_for('students') }}">Students</a>
-        <a href="{{ url_for('companies') }}">Companies</a>
-        <a href="{{ url_for('import_sgpa') }}">SGPA Import</a>
-        <a href="{{ url_for('backlog_history') }}">Backlog History</a>
-      {% endif %}
-      {% if g.user.role == 'ADMIN' %}
-        <a href="{{ url_for('admin_users') }}">User Admin</a>
-      {% endif %}
-      <a href="{{ url_for('logout') }}">Logout ({{ g.user.role }})</a>
-    {% else %}
-      <a href="{{ url_for('login') }}">Login</a>
-      <a href="{{ url_for('register') }}">Register</a>
-    {% endif %}
-  </nav>
-
-  <main>
-    {% with messages = get_flashed_messages() %}
-      {% if messages %}
-        {% for msg in messages %}
-          <div class="flash">{{ msg }}</div>
-        {% endfor %}
-      {% endif %}
-    {% endwith %}
+      <button type="submit">Login</button>
+      
+    </form>
     
-    {% block content %}{% endblock %}
-  </main>
-</body>
-</html>
+    <div class="auth-links">
+      <p>New user? <a href="{{ url_for('register') }}">Register here</a></p>
+      <p style="font-size: 0.8rem; margin-top: 6px; opacity: 0.7;">(Email verification with OTP required)</p>
+    </div>
+  </div>
+
+</div>
+
+{% endblock %}
