@@ -4,17 +4,23 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Campus Placement Portal</title>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,600&family=Plus+Jakarta+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+
   <style>
-    /* CSS Variables for consistent theming */
+    /* CSS Variables for Deep, Glowing Theme */
     :root {
-      --primary: #0f766e;
-      --primary-hover: #115e59;
-      --bg-light: #f8fafc;
-      --nav-bg: #0f172a;
-      --text-dark: #1e293b;
-      --text-muted: #64748b;
-      --border-color: #cbd5e1;
-      --card-bg: #ffffff;
+      --primary: #0284c7;
+      --primary-hover: #0369a1;
+      --primary-glow: #38bdf8;
+      --bg-gradient: radial-gradient(circle at 30% 50%, #0f172a 0%, #020617 100%);
+      --nav-bg: rgba(15, 23, 42, 0.6);
+      --text-light: #f8fafc;
+      --text-muted: #94a3b8;
+      --input-bg: rgba(255, 255, 255, 0.05);
+      --border-color: rgba(255, 255, 255, 0.3);
     }
 
     /* Global Reset & Typography */
@@ -25,49 +31,55 @@
     }
     
     body { 
-      font-family: 'Inter', system-ui, -apple-system, sans-serif; 
-      background: var(--bg-light); 
-      color: var(--text-dark); 
+      font-family: 'Plus Jakarta Sans', system-ui, sans-serif; 
+      background: var(--bg-gradient); 
+      color: var(--text-light); 
       line-height: 1.6;
       min-height: 100vh;
       display: flex;
       flex-direction: column;
+      /* Subtle network background pattern image can be added here */
+      background-image: radial-gradient(circle at 30% 50%, rgba(14, 165, 233, 0.1) 0%, transparent 50%);
     }
 
-    /* Navigation */
+    h1, h2, h3 { 
+      font-family: 'Playfair Display', serif; /* Fancy Font for Headers */
+      margin-bottom: 16px; 
+      color: #e0f2fe;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+    }
+
+    /* Glass Navigation */
     nav {
       background: var(--nav-bg);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
       padding: 16px 24px;
       display: flex;
       flex-wrap: wrap;
       gap: 12px;
       align-items: center;
       justify-content: center;
-      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+      border-bottom: 1px solid rgba(255,255,255,0.1);
     }
 
     nav a {
-      color: #f8fafc;
+      color: var(--text-light);
       text-decoration: none;
       font-size: 0.9rem;
       font-weight: 500;
       padding: 8px 16px;
-      border: 1px solid rgba(255,255,255,0.1);
-      border-radius: 6px;
-      background: rgba(255,255,255,0.05);
-      transition: all 0.2s ease;
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 0px; /* Sharp corners globally */
+      background: rgba(255,255,255,0.02);
+      transition: all 0.3s ease;
     }
 
     nav a:hover {
       background: var(--primary);
-      border-color: var(--primary);
-      color: #ffffff;
-      transform: translateY(-2px);
-      box-shadow: 0 4px 6px rgba(15, 118, 110, 0.2);
-    }
-
-    nav a:active {
-      transform: translateY(0);
+      border-color: var(--primary-glow);
+      box-shadow: 0 0 15px rgba(2, 132, 199, 0.4);
     }
 
     /* Main Container */
@@ -77,154 +89,173 @@
       max-width: 1200px; 
       margin: 32px auto; 
       padding: 0 24px; 
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
     }
 
-    h1, h2, h3 { 
-      margin-bottom: 16px; 
-      color: #0f172a;
-      font-weight: 600;
+    /* Form Elements - Floating & Sharp */
+    .form-group {
+      margin-bottom: 20px;
+      text-align: left;
     }
 
-    /* Alerts / Flash Messages */
-    .flash { 
-      background: #ecfeff; 
-      border-left: 4px solid #06b6d4; 
-      padding: 12px 16px; 
-      border-radius: 4px; 
-      margin-bottom: 24px; 
-      color: #083344;
+    .form-group label {
+      display: block;
+      font-size: 0.85rem;
+      color: var(--text-light);
+      margin-bottom: 6px;
       font-weight: 500;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+      letter-spacing: 0.5px;
     }
 
-    /* Grid Layouts */
-    .grid { display: grid; gap: 20px; }
-    .grid-2 { grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
-
-    /* Standard Cards */
-    .card { 
-      background: var(--card-bg);
-      border: 1px solid var(--border-color); 
-      border-radius: 12px; 
-      padding: 24px; 
-      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
-    }
-
-    /* Form Elements */
     input, select, textarea {
       width: 100%; 
       padding: 12px 16px; 
+      background: var(--input-bg);
       border: 1px solid var(--border-color); 
-      border-radius: 8px; 
-      margin-bottom: 16px;
+      border-radius: 0px; /* SHARP BORDERS */
+      color: var(--text-light);
       font-size: 1rem;
       font-family: inherit;
-      transition: border-color 0.2s, box-shadow 0.2s;
+      transition: all 0.3s ease;
+    }
+
+    input::placeholder {
+      color: rgba(255, 255, 255, 0.4);
     }
 
     input:focus, select:focus, textarea:focus {
       outline: none;
-      border-color: var(--primary);
-      box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.15);
+      border-color: var(--primary-glow);
+      background: rgba(255, 255, 255, 0.08);
+      box-shadow: 0 0 10px rgba(56, 189, 248, 0.2);
     }
 
     button { 
-      background: var(--primary); 
+      background: linear-gradient(135deg, var(--primary), #020617);
       color: #fff; 
-      border: none; 
-      font-size: 1rem;
+      border: 1px solid var(--primary-glow); 
+      font-size: 1.05rem;
       font-weight: 600; 
-      padding: 12px 24px;
-      border-radius: 8px;
+      padding: 14px 24px;
+      border-radius: 0px; /* SHARP BORDERS */
       cursor: pointer; 
-      transition: background 0.2s, transform 0.1s;
+      transition: all 0.3s ease;
       width: 100%;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      margin-top: 10px;
     }
 
     button:hover { 
-      background: var(--primary-hover); 
-    }
-    
-    button:active {
-      transform: scale(0.98);
+      background: var(--primary-hover);
+      box-shadow: 0 0 15px rgba(2, 132, 199, 0.5);
     }
 
     /* Links inside forms */
     .auth-links {
-      margin-top: 16px;
+      margin-top: 24px;
       text-align: center;
       font-size: 0.9rem;
       color: var(--text-muted);
     }
     
     .auth-links a {
-      color: var(--primary);
+      color: var(--primary-glow);
       text-decoration: none;
       font-weight: 500;
+      transition: color 0.2s;
     }
 
     .auth-links a:hover {
-      text-decoration: underline;
+      color: #fff;
+      text-shadow: 0 0 8px rgba(255,255,255,0.4);
     }
 
-    /* Split Layouts for Auth (Login/Register) */
-    .auth-wrapper {
-      display: flex;
-      flex-direction: column;
-      background: var(--card-bg);
-      border: 1px solid var(--border-color);
-      border-radius: 16px;
-      overflow: hidden;
-      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.01);
-      min-height: 65vh;
+    /* Alerts / Flash Messages */
+    .flash { 
+      background: rgba(6, 182, 212, 0.1); 
+      border-left: 4px solid var(--primary-glow); 
+      padding: 12px 16px; 
+      border-radius: 0; 
+      margin-bottom: 24px; 
+      color: #e0f2fe;
+      backdrop-filter: blur(5px);
     }
 
-    .auth-content {
-      flex: 1;
-      padding: 40px 24px;
+    /* Layout specific for Login */
+    .login-layout {
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: center;
+      gap: 40px;
+      margin-top: 4vh;
     }
 
-    .auth-image {
-      display: none; /* Hidden on mobile */
+    .login-left {
+      text-align: center;
       flex: 1;
-      /* Replace this URL with your preferred image */
-      background-image: url('https://images.unsplash.com/photo-1523050854058-8df90110c9f1?q=80&w=1000&auto=format&fit=crop');
-      background-size: cover;
-      background-position: center;
     }
 
-    /* Tables */
-    table { width: 100%; border-collapse: collapse; font-size: 0.95rem; background: var(--card-bg); border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-    th, td { border-bottom: 1px solid var(--border-color); padding: 12px 16px; text-align: left; }
-    th { background: #f1f5f9; font-weight: 600; color: var(--text-dark); }
-    tr:last-child td { border-bottom: none; }
+    .login-left h1 {
+      font-size: 2.8rem;
+      background: linear-gradient(to right, #e0f2fe, #7dd3fc);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 10px;
+    }
 
-    /* Badges */
-    .pill { padding: 4px 10px; border-radius: 999px; font-size: 0.75rem; font-weight: 600; background: #dcfce7; color: #166534; display: inline-block;}
-    code { background: #f1f5f9; padding: 2px 6px; border-radius: 4px; font-size: 0.9em; color: #e11d48;}
+    .login-left p {
+      font-size: 1.1rem;
+      color: var(--text-muted);
+      font-weight: 300;
+    }
 
-    /* Responsive adjustments */
-    @media (min-width: 768px) {
-      .auth-wrapper {
+    .icon-placeholder {
+      font-size: 4rem;
+      margin: 20px 0;
+      filter: drop-shadow(0 0 20px rgba(56, 189, 248, 0.3));
+    }
+
+    .login-right {
+      flex: 1;
+      width: 100%;
+      max-width: 420px;
+      padding: 20px;
+    }
+
+    .form-options {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.85rem;
+      margin-bottom: 20px;
+    }
+
+    .form-options label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      color: var(--text-muted);
+    }
+
+    .form-options input[type="checkbox"] {
+      width: auto;
+      margin: 0;
+    }
+
+    @media (min-width: 860px) {
+      .login-layout {
         flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+        gap: 80px;
       }
-      .auth-image {
-        display: block; /* Show image on screens wider than 768px */
+      .login-left {
+        text-align: left;
       }
-      .auth-content {
-        padding: 48px;
-      }
-    }
-
-    @media (max-width: 640px) {
-      nav { flex-direction: column; padding: 16px; }
-      nav a { width: 100%; text-align: center; }
-      main { margin: 16px auto; padding: 0 16px; }
-      .card { padding: 16px; }
     }
   </style>
 </head>
