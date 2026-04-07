@@ -98,7 +98,7 @@
           <div style="margin-left:10px;"><b>{{ key.replace('_', ' ').title() }}:</b> {{ value }}</div>
       {% endfor %}
   {% elif extra %}
-      <div style="margin-left:10px;">{{ extra }}</div>
+    <div style="margin-left:10px;">{{ extra.strip('{}').replace('"', '').replace(',', ' | ').replace('_', ' ').title() }}</div>
   {% else %}
       <div style="margin-left:10px;">&mdash;</div>
   {% endif %}
