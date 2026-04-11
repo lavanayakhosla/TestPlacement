@@ -2,484 +2,244 @@
 {% block content %}
 
 <style>
-    /* --- Immersive Portal Layout --- */
-    .portal-layout {
-        display: flex;
-        flex-direction: column;
-        gap: 40px;
-        margin-top: 20px;
+    /* --- Light Theme Colors --- */
+    :root {
+        --bg-color: #f8fafc;
+        --card-bg: #ffffff;
+        --text-main: #0f172a;
+        --text-muted: #64748b;
+        --border-light: #e2e8f0;
+        --primary-blue: #2563eb;
+        --primary-hover: #1d4ed8;
+        --success: #10b981;
+        --warning: #f59e0b;
     }
 
-    @media (min-width: 992px) {
-        .portal-layout {
-            flex-direction: row;
-            align-items: flex-start;
-        }
+    body {
+        background-color: var(--bg-color);
+        color: var(--text-main);
     }
 
-    .portal-left {
-        flex: 1;
-        min-width: 320px;
+    /* Override base.html dark nav for this specific view if needed */
+    nav { background: #ffffff; border-bottom: 1px solid var(--border-light); }
+    nav a { color: var(--text-main); border-color: transparent; }
+    nav a:hover { background: #f1f5f9; color: var(--primary-blue); }
+
+    .dashboard-header {
+        margin-bottom: 24px;
+        padding-bottom: 12px;
+        border-bottom: 2px solid var(--border-light);
     }
 
-    .portal-right {
-        flex: 1.6;
-        min-width: 320px;
-    }
+    .dashboard-header h1 { color: var(--text-main); font-size: 2rem; margin: 0; }
 
-    /* --- Typography & Text --- */
+    /* --- Application Sections --- */
     .section-title {
-        font-family: 'Playfair Display', serif;
-        color: #e0f2fe;
-        font-size: 1.8rem;
-        margin-bottom: 5px;
-    }
-
-    .section-subtitle {
-        color: var(--text-muted);
-        font-size: 0.9rem;
-        margin-bottom: 24px;
-    }
-
-    /* --- Left Column: Form Elements --- */
-    .immersive-form label {
-        color: var(--text-muted);
-        font-size: 0.85rem;
-        margin-bottom: 6px;
-        display: block;
-    }
-
-    .immersive-form select,
-    .immersive-form input,
-    .immersive-form textarea {
-        background: rgba(255, 255, 255, 0.03);
-        border: 1px solid rgba(255, 255, 255, 0.15);
-        border-radius: 8px;
-        color: #fff;
-        padding: 12px 16px;
-        width: 100%;
-        margin-bottom: 20px;
-        transition: all 0.3s;
-    }
-
-    .immersive-form select:focus,
-    .immersive-form input:focus {
-        background: rgba(255, 255, 255, 0.08);
-        border-color: #38bdf8;
-        outline: none;
-    }
-
-    .criteria-box {
-        background: rgba(0, 0, 0, 0.2);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        border-radius: 12px;
-        padding: 20px;
-        margin-bottom: 24px;
-        position: relative;
-    }
-
-    .criteria-title {
-        position: absolute;
-        top: -10px;
-        left: 15px;
-        background: #061224; /* Matches underlying dark background */
-        padding: 0 10px;
-        font-size: 0.85rem;
-        font-weight: 600;
-        color: #e0f2fe;
-    }
-
-    .dynamic-grid {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 15px;
-    }
-
-    /* Glowing Teal Button */
-    .btn-glow {
-        background: linear-gradient(90deg, #2dd4bf, #34d399);
-        color: #022c22;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        border: none;
-        border-radius: 8px;
-        padding: 16px;
-        width: 100%;
-        cursor: pointer;
-        box-shadow: 0 0 20px rgba(52, 211, 153, 0.4);
-        transition: all 0.3s;
-    }
-
-    .btn-glow:hover {
-        box-shadow: 0 0 30px rgba(52, 211, 153, 0.6);
-        transform: translateY(-2px);
-    }
-
-    /* --- Right Column: Accordion Rows --- */
-    .list-header {
-        display: grid;
-        grid-template-columns: 2fr 2fr 1.5fr 1fr 1.5fr;
-        padding: 0 16px 12px 16px;
-        color: var(--text-muted);
-        font-size: 0.85rem;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        margin-bottom: 12px;
-    }
-
-    .accordion-row {
-        background: rgba(255, 255, 255, 0.02);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        border-radius: 8px;
-        margin-bottom: 10px;
-        transition: all 0.3s ease;
-        overflow: hidden;
-    }
-
-    .accordion-row:hover {
-        background: rgba(255, 255, 255, 0.05);
-        border-color: rgba(56, 189, 248, 0.3);
-    }
-
-    .accordion-header {
-        display: grid;
-        grid-template-columns: 2fr 2fr 1.5fr 1fr 1.5fr;
-        align-items: center;
-        padding: 16px;
-        cursor: pointer;
-        font-size: 0.9rem;
-    }
-
-    .status-pill {
-        border: 1px solid #38bdf8;
-        color: #38bdf8;
-        background: rgba(56, 189, 248, 0.1);
-        padding: 4px 10px;
-        border-radius: 20px;
-        font-size: 0.75rem;
-        text-align: center;
-        width: max-content;
-        box-shadow: 0 0 10px rgba(56, 189, 248, 0.2);
-    }
-
-    .view-details {
-        color: var(--text-muted);
-        text-align: right;
-        transition: color 0.2s;
-    }
-
-    .accordion-row:hover .view-details {
-        color: #e0f2fe;
-    }
-
-    .accordion-body {
-        max-height: 0;
-        opacity: 0;
-        padding: 0 16px;
-        transition: all 0.4s ease;
-        background: rgba(0, 0, 0, 0.2);
-    }
-
-    /* Active expanded state */
-    .accordion-row.active {
-        border-color: rgba(56, 189, 248, 0.5);
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-    }
-
-    .accordion-row.active .accordion-body {
-        max-height: 800px; /* arbitrary large max-height for transition */
-        opacity: 1;
-        padding: 20px 16px;
-        border-top: 1px solid rgba(255, 255, 255, 0.1);
-    }
-
-    /* Inside expanded view */
-    .details-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        gap: 20px;
-        font-size: 0.85rem;
-        color: #e0f2fe;
-    }
-
-    .details-grid h4 {
-        color: #38bdf8;
-        margin-bottom: 8px;
-        font-weight: 500;
+        font-size: 1.2rem;
+        color: var(--text-main);
+        margin: 32px 0 16px 0;
         display: flex;
         align-items: center;
         gap: 8px;
     }
 
-    .info-list div {
-        margin-bottom: 6px;
-    }
-    
-    .info-list span {
-        color: var(--text-muted);
-    }
-
-    .action-buttons {
-        margin-top: 20px;
+    .app-card {
+        background: var(--card-bg);
+        border: 1px solid var(--border-light);
+        border-radius: 12px;
+        padding: 16px 24px;
+        margin-bottom: 12px;
         display: flex;
-        gap: 10px;
-        flex-wrap: wrap;
-        border-top: 1px dashed rgba(255,255,255,0.1);
-        padding-top: 16px;
+        justify-content: space-between;
+        align-items: center;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+        transition: box-shadow 0.2s, transform 0.2s;
     }
 
-    .btn-sm {
-        background: rgba(255, 255, 255, 0.05);
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        color: #fff;
-        padding: 6px 12px;
-        border-radius: 4px;
-        text-decoration: none;
-        font-size: 0.8rem;
+    .app-card:hover {
+        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        transform: translateY(-2px);
+    }
+
+    .company-info h3 { margin: 0 0 4px 0; color: var(--text-main); font-size: 1.1rem; }
+    .company-info p { margin: 0; color: var(--text-muted); font-size: 0.9rem; }
+
+    /* --- Buttons & Badges --- */
+    .btn-apply {
+        background: var(--primary-blue);
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 6px;
+        font-weight: 600;
         cursor: pointer;
         transition: background 0.2s;
+        width: auto;
+    }
+    .btn-apply:hover { background: var(--primary-hover); }
+
+    .badge {
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+    .badge.pending { background: #fef3c7; color: #d97706; border: 1px solid #fde68a; }
+    .badge.completed { background: #d1fae5; color: #047857; border: 1px solid #a7f3d0; }
+
+    /* --- Modal (Popup) Styles --- */
+    .modal-overlay {
+        position: fixed;
+        top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(15, 23, 42, 0.4);
+        backdrop-filter: blur(4px);
+        z-index: 999;
+        display: none;
+        opacity: 0;
+        transition: opacity 0.3s;
     }
 
-    .btn-sm:hover { background: rgba(255, 255, 255, 0.1); }
-    .btn-danger { border-color: rgba(244, 63, 94, 0.5); color: #fda4af; }
-    .btn-danger:hover { background: rgba(244, 63, 94, 0.2); }
+    .modal-content {
+        position: fixed;
+        top: 50%; left: 50%;
+        transform: translate(-50%, -50%) scale(0.95);
+        background: var(--card-bg);
+        width: 100%;
+        max-width: 500px;
+        border-radius: 16px;
+        padding: 32px;
+        z-index: 1000;
+        box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1);
+        display: none;
+        opacity: 0;
+        transition: all 0.3s;
+    }
 
-    /* Admin Form inline */
-    .admin-form {
+    .modal-content.active, .modal-overlay.active {
+        display: block;
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+    }
+
+    .modal-header {
         display: flex;
-        gap: 10px;
-        background: rgba(15, 23, 42, 0.6);
-        padding: 16px;
-        border-radius: 8px;
-        border: 1px solid rgba(255,255,255,0.1);
-        margin-bottom: 20px;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 24px;
     }
+
+    .modal-header h2 { margin: 0; font-size: 1.5rem; color: var(--text-main); }
+    .close-btn { background: none; border: none; font-size: 1.5rem; color: var(--text-muted); cursor: pointer; padding: 0; width: auto; }
+    
+    .form-group { margin-bottom: 16px; }
+    .form-group label { display: block; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 6px; font-weight: 500; }
+    .form-group input { 
+        width: 100%; padding: 12px; border: 1px solid var(--border-light); 
+        border-radius: 8px; background: #f8fafc; color: var(--text-main);
+    }
+    /* Readonly style for autofilled fields */
+    .form-group input[readonly] { background: #e2e8f0; color: #475569; cursor: not-allowed; border-style: dashed; }
 </style>
 
-<div class="portal-layout">
-    
-    <div class="portal-left">
-        <h2 class="section-title">Apply to Company</h2>
-        
-        {% if g.user.role == "STUDENT" %}
-            {% if students %}
-                <div class="section-subtitle">Applying as: <b>{{ students[0].roll_no }} - {{ students[0].name }}</b></div>
-            {% else %}
-                <div class="section-subtitle" style="color: #fda4af;">No linked student profile found for this account.</div>
-            {% endif %}
-        {% endif %}
+<main style="max-width: 900px; margin: 0 auto; padding: 24px;">
 
-        <form method="post" class="immersive-form">
-            
-            {% if g.user.role != "STUDENT" %}
-                <label>Student</label>
-                <select name="student_id" required>
-                    <option value="">Select Student...</option>
-                    {% for s in students %}
-                    <option value="{{ s.id }}">{{ s.roll_no }} - {{ s.name }}</option>
-                    {% endfor %}
-                </select>
-            {% endif %}
-
-            <label>Company</label>
-            <select name="company_id" required>
-                <option value="">Search for a company...</option>
-                {% for c in companies %}
-                <option value="{{ c.id }}">{{ c.name }}</option>
-                {% endfor %}
-            </select>
-
-            <div class="criteria-box">
-                <div class="criteria-title">Company-Specific Criteria</div>
-                <div id="dynamic-fields" class="dynamic-grid"></div>
-            </div>
-
-            <button type="submit" class="btn-glow">Apply Now ➔</button>
-        </form>
+    <div class="dashboard-header">
+        <h1>Application Center</h1>
+        <p style="color: var(--text-muted);">Track and manage all your placement opportunities from one place.</p>
     </div>
 
-
-    <div class="portal-right">
-        
-        {% if g.user.role in ["ADMIN", "PLACEMENT_COORDINATOR"] %}
-            <h2 class="section-title" style="font-size: 1.3rem;">Download Applicants</h2>
-            <form method="get" action="{{ url_for('export_applicants') }}" class="admin-form immersive-form" style="margin-bottom: 30px;">
-                <div style="flex: 1;">
-                    <select name="company_id" required style="margin: 0;">
-                        <option value="">-- Select Company --</option>
-                        {% for c in companies %}
-                            <option value="{{ c.id }}">{{ c.name }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div style="flex: 1;">
-                    <select name="branch" style="margin: 0;">
-                        <option value="ALL">ALL Branches</option>
-                        {% for b in branch_choices %}
-                            <option value="{{ b }}">{{ b }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <button type="submit" class="btn-sm" style="height: 100%; border-color: #38bdf8; color: #38bdf8;">Download</button>
-            </form>
-        {% endif %}
-
-        <h2 class="section-title">Submitted Applications Module</h2>
-        
-        <div class="list-header">
-            <div>Company</div>
-            <div>Role</div>
-            <div>Deadline</div>
-            <div>Status</div>
-            <div style="text-align: right;">Actions</div>
-        </div>
-
-        <div class="accordion-list">
-            {% for a in applications %}
-            <div class="accordion-row" id="row-{{ a.id }}">
-                
-                <div class="accordion-header" onclick="toggleRow({{ a.id }})">
-                    <div style="font-weight: 600; color: #e0f2fe;">{{ a.company.name }}</div>
-                    <div>{{ a.company.hiring_role or "—" }}</div>
-                    <div>{{ a.company.application_deadline | ist if a.company.application_deadline else "—" }}</div>
-                    <div><div class="status-pill">{{ a.status }}</div></div>
-                    <div class="view-details">View Details ➔</div>
-                </div>
-
-                <div class="accordion-body">
-                    <div class="details-grid">
-                        
-                        <div class="info-list">
-                            <h4>👤 Applicant Profile</h4>
-                            <div><span>Student ID:</span> {{ a.student.roll_no }}</div>
-                            <div><span>Name:</span> {{ a.student.name }}</div>
-                            <div><span>Applied At:</span> {{ a.applied_at | ist }}</div>
-                            <div><span>Resume:</span> 
-                                {% if a.resume_link %}
-                                    <a href="{{ a.resume_link }}" target="_blank" style="color: #38bdf8;">View Link</a>
-                                {% else %}
-                                    Not set
-                                {% endif %}
-                            </div>
-                        </div>
-
-                        <div class="info-list">
-                            <h4>🏆 Key Criteria</h4>
-                            {% set extra = a.extra_data %}
-                            {% if extra is mapping %}
-                                {% for key, value in extra.items() %}
-                                    <div><span>{{ key.replace('_', ' ').title() }}:</span> {{ value }}</div>
-                                {% endfor %}
-                            {% elif extra %}
-                                <div>{{ extra.strip('{}').replace('"', '').replace(',', ' | ').replace('_', ' ').title() }}</div>
-                            {% else %}
-                                <div>&mdash;</div>
-                            {% endif %}
-                        </div>
-
-                        <div class="info-list">
-                            <h4>⚠️ Policy & Info</h4>
-                            <div><span>Company Policy:</span> {{ a.company.selection_policy }}</div>
-                            <div><span>Portal Link:</span> 
-                                {% if a.company.apply_link %}
-                                    <a href="{{ a.company.apply_link }}" target="_blank" style="color: #38bdf8;">Apply here</a>
-                                {% else %}
-                                    No link
-                                {% endif %}
-                            </div>
-                            {% if a.exported_at %}
-                                <div><span>Exported At:</span> {{ a.exported_at | ist }}</div>
-                            {% endif %}
-                        </div>
-
-                    </div>
-
-                    <div class="action-buttons">
-                        {% if g.user.role == "STUDENT" %}
-                            <a href="{{ url_for('edit_application', application_id=a.id) }}" class="btn-sm">Edit Application</a>
-                            <form action="{{ url_for('delete_application', application_id=a.id) }}" method="post" style="display:inline;">
-                                <button type="submit" class="btn-sm btn-danger" onclick="return confirm('Are you sure you want to withdraw this application?')">Withdraw</button>
-                            </form>
-                        {% endif %}
-
-                        {% if g.user.role in ["ADMIN", "PLACEMENT_COORDINATOR"] %}
-                            <form action="{{ url_for('update_application_status', application_id=a.id) }}" method="post" style="display: flex; gap: 8px; align-items: center; width: 100%;">
-                                <span style="font-size: 0.85rem; color: var(--text-muted);">Update Status:</span>
-                                <select name="status" required class="btn-sm" style="background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.2);">
-                                    <option value="APPLIED" {% if a.status == 'APPLIED' %}selected{% endif %}>APPLIED</option>
-                                    <option value="SHORTLISTED" {% if a.status == 'SHORTLISTED' %}selected{% endif %}>SHORTLISTED</option>
-                                    <option value="INTERVIEW" {% if a.status == 'INTERVIEW' %}selected{% endif %}>INTERVIEW</option>
-                                    <option value="SELECTED" {% if a.status == 'SELECTED' %}selected{% endif %}>SELECTED</option>
-                                    <option value="REJECTED" {% if a.status == 'REJECTED' %}selected{% endif %}>REJECTED</option>
-                                </select>
-                                <button type="submit" class="btn-sm" style="border-color: #34d399; color: #34d399;">Save</button>
-                            </form>
-                        {% endif %}
-                    </div>
-                </div>
+    <h2 class="section-title">🚀 Available to Apply (Not Started)</h2>
+    {% for c in companies %}
+        <div class="app-card">
+            <div class="company-info">
+                <h3>{{ c.name }}</h3>
+                <p>Role: {{ c.hiring_role or "Software Engineer" }} | Deadline: {{ c.application_deadline or "15 Nov 2023" }}</p>
             </div>
-            {% endfor %}
+            <button class="btn-apply" onclick="openApplyModal('{{ c.id }}', '{{ c.name }}', '{{ c.hiring_role }}')">Apply Now</button>
         </div>
+    {% endfor %}
+
+    <h2 class="section-title">⏳ Pending / Under Review</h2>
+    {% for a in applications %}
+        {% if a.status in ['APPLIED', 'SHORTLISTED', 'INTERVIEW'] %}
+        <div class="app-card">
+            <div class="company-info">
+                <h3>{{ a.company.name }}</h3>
+                <p>Role: {{ a.company.hiring_role }} | Applied on: {{ a.applied_at }}</p>
+            </div>
+            <div class="badge pending">{{ a.status }}</div>
+        </div>
+        {% endif %}
+    {% endfor %}
+
+    <h2 class="section-title">✅ Completed / Finalized</h2>
+    {% for a in applications %}
+        {% if a.status in ['SELECTED', 'REJECTED'] %}
+        <div class="app-card">
+            <div class="company-info">
+                <h3>{{ a.company.name }}</h3>
+                <p>Role: {{ a.company.hiring_role }}</p>
+            </div>
+            <div class="badge completed">{{ a.status }}</div>
+        </div>
+        {% endif %}
+    {% endfor %}
+
+</main>
+
+<div class="modal-overlay" id="modalOverlay" onclick="closeModal()"></div>
+
+<div class="modal-content" id="applyModal">
+    <div class="modal-header">
+        <h2 id="modalCompanyName">Apply to Company</h2>
+        <button class="close-btn" onclick="closeModal()">&times;</button>
     </div>
+
+    <form method="post" action="{{ url_for('applications') }}">
+        <input type="hidden" name="company_id" id="modalCompanyId">
+        
+        <p style="font-size: 0.85rem; color: var(--primary-blue); margin-bottom: 16px;">
+            ℹ️ Details below are auto-filled from your profile.
+        </p>
+        
+        <div class="form-group">
+            <label>Student Name</label>
+            <input type="text" value="{{ g.user.student.name if g.user.student else 'MANASVI' }}" readonly>
+        </div>
+
+        <div class="form-group" style="display: flex; gap: 16px;">
+            <div style="flex: 1;">
+                <label>CGPA</label>
+                <input type="text" value="{{ g.user.student.cgpa if g.user.student else '8.5' }}" readonly>
+            </div>
+            <div style="flex: 1;">
+                <label>Branch</label>
+                <input type="text" value="{{ g.user.student.branch if g.user.student else 'CSE' }}" readonly>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label>Why should we hire you? (Optional)</label>
+            <input type="text" name="extra_reason" placeholder="Brief statement...">
+        </div>
+
+        <button type="submit" class="btn-apply" style="width: 100%; margin-top: 16px; padding: 14px;">Confirm & Submit Application</button>
+    </form>
 </div>
 
 <script>
-const companyFields = {{ company_fields | tojson }};
-
-function loadFields(companyId) {
-    const container = document.getElementById("dynamic-fields");
-    container.innerHTML = "";
-
-    const fields = companyFields[companyId] || [];
-
-    fields.forEach(field => {
-        // Wrapping input in a div to fit the grid layout seamlessly
-        let html = `<div><label>${field.label}</label>`;
-
-        if (field.type === "text" || field.type === "number") {
-            html += `<input type="${field.type}" name="extra_${field.name}" placeholder="Enter ${field.label}" ${field.required ? "required" : ""}>`;
-        }
-        else if (field.type === "textarea") {
-            html += `<textarea name="extra_${field.name}" placeholder="Enter details..." ${field.required ? "required" : ""}></textarea>`;
-        }
-        else if (field.type === "select") {
-            html += `<select name="extra_${field.name}" ${field.required ? "required" : ""}>`;
-            html += `<option value="">-- Select --</option>`;
-            field.options.forEach(opt => {
-                html += `<option value="${opt}">${opt}</option>`;
-            });
-            html += `</select>`;
-        }
-        html += `</div>`;
-        container.innerHTML += html;
-    });
-}
-
-// Replaces toggleActions: Toggles the 'active' class on the row
-function toggleRow(id) {
-    const row = document.getElementById('row-' + id);
-    if(row.classList.contains('active')) {
-        row.classList.remove('active');
-    } else {
-        // Optional: Close other rows before opening this one
-        // document.querySelectorAll('.accordion-row').forEach(r => r.classList.remove('active'));
-        row.classList.add('active');
+    function openApplyModal(companyId, companyName, role) {
+        document.getElementById('modalCompanyId').value = companyId;
+        document.getElementById('modalCompanyName').innerText = "Apply to " + companyName;
+        
+        document.getElementById('modalOverlay').classList.add('active');
+        document.getElementById('applyModal').classList.add('active');
     }
-}
 
-// Trigger on company change
-const companySelect = document.querySelector('select[name="company_id"]');
-
-if (companySelect) {
-    companySelect.addEventListener("change", function() {
-        loadFields(this.value);
-    });
-}
-
-window.addEventListener("DOMContentLoaded", () => {
-    if (companySelect && companySelect.value) {
-        loadFields(companySelect.value);
+    function closeModal() {
+        document.getElementById('modalOverlay').classList.remove('active');
+        document.getElementById('applyModal').classList.remove('active');
     }
-});
 </script>
+
 {% endblock %}
