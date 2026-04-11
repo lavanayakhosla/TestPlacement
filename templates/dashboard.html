@@ -1,7 +1,11 @@
 {% extends "base.html" %}
 {% block content %}
 <h1>Campus Placement Portal</h1>
+
 <div class="grid grid-2">
+  
+  {# --- YE HISSA SIRF ADMIN/COORDINATOR KO DIKHEGA --- #}
+  {% if g.user.role != 'STUDENT' %}
   <div class="card">
     <h3>Students</h3>
     <p><b>{{ student_count }}</b> registered</p>
@@ -14,6 +18,9 @@
     <h3>Applications</h3>
     <p><b>{{ application_count }}</b> submitted</p>
   </div>
+  {% endif %}
+
+  {# --- YE CARD SABKO DIKHEGA --- #}
   <div class="card">
     <h3>What This Supports</h3>
     <ul>
@@ -25,17 +32,20 @@
     </ul>
   </div>
 </div>
+
+{# --- REMINDERS SECTION --- #}
 {% if reminders and reminders|length > 0 %}
-<div style="background:#fff3cd; padding:15px; border-radius:8px; margin-bottom:15px;">
-  <strong>⚠ Deadlines Approaching!</strong>
-  <ul>
+<div style="background:#fff3cd; padding:15px; border-radius:8px; margin-top:20px; border: 1px solid #ffeeba;">
+  <strong style="color: #856404;">⚠ Deadlines Approaching!</strong>
+  <ul style="margin-top: 10px;">
     {% for c in reminders %}
       <li>
-        {{ c.name }} - Apply before 
-        {{ c.application_deadline | ist }}
+        <b>{{ c.name }}</b> - Apply before 
+        <span class="text-danger">{{ c.application_deadline | ist }}</span>
       </li>
     {% endfor %}
   </ul>
 </div>
 {% endif %}
+
 {% endblock %}
