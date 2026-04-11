@@ -656,14 +656,19 @@ def resolve_source(source: str, application: Application):
 @login_required
 def dashboard():
     reminders = []
+    
+    # 1. Base Counts (Default values for Students)
+    s_count = 0
+    c_count = 0
+    a_count = 0
 
-    # 🔹 Only for students
+    # 2. Agar user STUDENT hai
     if g.user.role == "STUDENT" and g.user.student_id:
         student = Student.query.get(g.user.student_id)
-
+        
+        # Student ke liye reminders calculate karein
         now = datetime.utcnow()
         upcoming_deadline = now + timedelta(days=3)
-
         companies = Company.query.filter(
             Company.application_deadline != None,
             Company.application_deadline >= now,
@@ -671,36 +676,28 @@ def dashboard():
         ).all()
 
         for c in companies:
-            # already applied?
-            applied = Application.query.filter_by(
-                student_id=student.id,
-                company_id=c.id
-            ).first()
+            applied = Application.query.filter_by(student_id=student.id, company_id=c.id).first()
+            if not applied:
+                eligible, _ = allowed_for_company(student, c)
+                if eligible:
+                    reminders.append(c)
+        
+        # Student ko sirf uski apni application count dikhani hai toh:
+        a_count = Application.query.filter_by(student_id=student.id).count()
 
-            if applied:
-                continue
+    # 3. Agar user ADMIN/COORDINATOR hai, toh asli counts nikalein
+    else:
+        s_count = Student.query.count()
+        c_count = Company.query.count()
+        a_count = Application.query.count()
 
-            eligible, _ = allowed_for_company(student, c)
-
-            if eligible:
-                reminders.append(c)
-
-        # 👇 STUDENT DASHBOARD
+    # 4. Template return karein
     return render_template(
         "dashboard.html",
-         student_count=1,
-         company_count=Company.query.count(),
-         application_count=Application.query.filter_by(student_id=student.id).count(),
-         reminders=reminders
-    )
-
-    # 👇 ADMIN / COORDINATOR DASHBOARD
-    return render_template(
-        "dashboard.html",
-        student_count=Student.query.count(),
-        company_count=Company.query.count(),
-        application_count=Application.query.count(),
-        reminders=[]  # no reminders for admin
+        student_count=s_count,
+        company_count=c_count,
+        application_count=a_count,
+        reminders=reminders
     )
 
 @app.route("/students", methods=["GET", "POST"])
