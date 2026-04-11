@@ -687,11 +687,12 @@ def dashboard():
 
         # 👇 STUDENT DASHBOARD
         return render_template(
-            "dashboard.html",
-            student_count=1,
-            company_count=Company.query.count(),
-            application_count=Application.query.filter_by(student_id=student.id).count(),
-            reminders=reminders
+            "applications.html"
+          #  "dashboard.html",
+         #   student_count=1,
+         #   company_count=Company.query.count(),
+          #  application_count=Application.query.filter_by(student_id=student.id).count(),
+          #  reminders=reminders
         )
 
     # 👇 ADMIN / COORDINATOR DASHBOARD
