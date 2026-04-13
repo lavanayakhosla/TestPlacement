@@ -36,17 +36,16 @@
 
 {# --- REMINDERS SECTION --- #}
 {% if reminders and reminders|length > 0 %}
-<div style="background:#fff3cd; padding:15px; border-radius:8px; margin-top:20px; border: 1px solid #ffeeba;">
-  <strong style="color: #856404;">⚠ Deadlines Approaching!</strong>
-  <ul style="margin-top: 10px;">
-    {% for c in reminders %}
-      <li>
-        <b>{{ c.name }}</b> - Apply before 
-        <span class="text-danger">{{ c.application_deadline | ist }}</span>
-      </li>
-    {% endfor %}
-  </ul>
-</div>
+    <div style="background: rgba(255, 193, 7, 0.1); padding: 15px; border-radius: 8px; margin-top: 20px; border: 1px solid rgba(255, 193, 7, 0.3); color: #e0e0e0;">
+        <strong style="color: #ffc107;">⚠ Deadlines Approaching!</strong>
+        <ul style="margin-top: 10px;">
+            {% for c in reminders %}
+                <li>
+                    <b>{{ c.name }}</b> - Apply before <span class="text-danger">{{ c.application_deadline | ist }}</span>
+                </li>
+            {% endfor %}
+        </ul>
+    </div>
 {% endif %}
 
 {% endblock %}
