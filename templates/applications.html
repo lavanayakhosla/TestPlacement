@@ -53,10 +53,101 @@
   </div>
 </div>
 
-{# --- Download and Table code remains same --- #}
+{% if g.user.role in ["ADMIN", "PLACEMENT_COORDINATOR"] %}
+<h3>Download Applicants</h3>
+<form method="get" action="{{ url_for('export_applicants') }}">
+  <label>Select Company</label>
+  <select name="company_id" required>
+    <option value="">-- Select Company --</option>
+    {% for c in companies %}
+      <option value="{{ c.id }}">{{ c.name }}</option>
+    {% endfor %}
+  </select>
+
+  <label>Select Branch</label>
+  <select name="branch">
+    <option value="ALL">ALL</option>
+    {% for b in branch_choices %}
+      <option value="{{ b }}">{{ b }}</option>
+    {% endfor %}
+  </select>
+
+  <button type="submit">Download Applicants</button>
+</form>
+{% endif %}
+
+<h3>Submitted Applications</h3>
+<table>
+  <thead>
+    <tr>
+      <th>Student</th>
+      <th>Company</th>
+      <th>Role</th>
+      <th>Deadline</th>
+      <th> Actions </th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for a in applications %}
+    <tr>
+      <td>{{ a.student.roll_no }} - {{ a.student.name }}</td>
+      <td>{{ a.company.name }}</td>
+      <td>{{ a.company.hiring_role or "—" }}</td>
+      <td>{{ a.company.application_deadline | ist if a.company.application_deadline else "—" }}</td>
+      <td>
+        <button type="button" class="toggle-actions" onclick="toggleActions({{ a.id }})">Actions</button>
+        <div id="actions-{{ a.id }}" style="display:none; margin-top:5px; border:1px solid #ccc; padding:10px; border-radius:4px; background: rgba(0,0,0,0.2);">
+          <div>
+            <b>Details:</b>
+            {% set extra = a.extra_data %}
+            {% if extra is mapping %}
+                {% for key, value in extra.items() %}
+                    <div style="margin-left:10px;"><b>{{ key.replace('_', ' ').title() }}:</b> {{ value }}</div>
+                {% endfor %}
+            {% elif extra %}
+              <div style="margin-left:10px;">{{ extra.strip('{}').replace('"', '').replace(',', ' | ').replace('_', ' ').title() }}</div>
+            {% else %}
+                <div style="margin-left:10px;">&mdash;</div>
+            {% endif %}
+          </div>
+          
+          <div style="margin-top: 8px;"><b>Company Policy:</b> {{ a.company.selection_policy }}</div>
+          <div><b>Status:</b> <span style="color: #fbbf24;">{{ a.status }}</span></div>
+          <div><b>Resume Link:</b> {{ a.resume_link or "Not set" }}</div>
+          <div><b>Applied At:</b> {{ a.applied_at | ist }}</div>
+          <div><b>Exported At:</b> {{ a.exported_at | ist if a.exported_at else "-" }}</div>
+
+          {% if g.user.role == "STUDENT" %}
+          <div style="margin-top:10px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 10px;">
+              <a href="{{ url_for('edit_application', application_id=a.id) }}" style="margin-right: 15px;">Edit Application</a>
+              <form action="{{ url_for('delete_application', application_id=a.id) }}" method="post" style="display:inline;">
+                  <button type="submit" style="color: #f87171; background: none; border: none; cursor: pointer; padding: 0;" onclick="return confirm('Are you sure you want to delete this application?')">Withdraw</button>
+              </form>
+          </div>
+          {% endif %}
+
+          {% if g.user.role in ["ADMIN", "PLACEMENT_COORDINATOR"] %}
+          <div style="margin-top:10px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 10px;">
+              <form action="{{ url_for('update_application_status', application_id=a.id) }}" method="post">
+                  <select name="status" required style="width: auto; display: inline-block;">
+                      <option value="APPLIED">APPLIED</option>
+                      <option value="SHORTLISTED">SHORTLISTED</option>
+                      <option value="INTERVIEW">INTERVIEW</option>
+                      <option value="SELECTED">SELECTED</option>
+                      <option value="REJECTED">REJECTED</option>
+                  </select>
+                  <button type="submit" style="padding: 5px 10px;">Save Status</button>
+              </form>
+          </div>
+          {% endif %}
+        </div>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
 
 <script>
-// 1. Full Company Data Map (Eligibility + Deadline)
 const companyData = {
     {% for c in companies %}
     "{{ c.id }}": {
@@ -75,7 +166,7 @@ const companyFields = {{ company_fields | tojson }};
 function filterEligibleCompanies() {
     const companySelect = document.getElementById("company-select");
     const studentSelect = document.getElementById("student-select");
-    const now = new Date(); // Current Time
+    const now = new Date();
     
     let sCgpa, sBranch, sBacklogs;
 
@@ -97,20 +188,16 @@ function filterEligibleCompanies() {
     
     Object.keys(companyData).forEach(id => {
         const c = companyData[id];
-        
-        // Check Eligibility
         const isCgpaEligible = sCgpa >= c.min_cgpa;
         const isBranchEligible = c.branches.includes("ALL") || c.branches.includes(sBranch);
         const isBacklogEligible = c.allow_backlogs ? true : (sBacklogs === 0);
         
-        // Check Deadline
         let isExpired = false;
         if (c.deadline) {
             const deadlineDate = new Date(c.deadline);
             if (now > deadlineDate) isExpired = true;
         }
 
-        // Show only if Eligible AND NOT Expired
         if (isCgpaEligible && isBranchEligible && isBacklogEligible && !isExpired) {
             const opt = document.createElement("option");
             opt.value = id;
