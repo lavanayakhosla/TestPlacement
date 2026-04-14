@@ -1232,11 +1232,29 @@ def export_applicants():
 
         
 
+    # # 🔹 Build Excel
+    # rows = []
+    # for s in students:
+    #     app_entry = Application.query.filter_by(student_id=s.id, company_id=int(company_id)).first()
+    #     rows.append({
+    #         "Roll No": s.roll_no,
+    #         "Name": s.name,
+    #         "Branch": s.branch,
+    #         "Semester": s.current_semester,
+    #         "CGPA": s.cgpa,
+    #         "Active Backlogs": s.total_backlogs,
+    #         "Dead Backlogs": getattr(s, "dead_backlogs", 0),
+    #         "Eligibility": s.eligibility_status,
+            
+    #         "Resume Link": app_entry.resume_link if app_entry and app_entry.resume_link else s.resume_link or "",
+    #     })
     # 🔹 Build Excel
     rows = []
     for s in students:
         app_entry = Application.query.filter_by(student_id=s.id, company_id=int(company_id)).first()
-        rows.append({
+        
+        # 1. Base student data
+        row_data = {
             "Roll No": s.roll_no,
             "Name": s.name,
             "Branch": s.branch,
@@ -1245,12 +1263,26 @@ def export_applicants():
             "Active Backlogs": s.total_backlogs,
             "Dead Backlogs": getattr(s, "dead_backlogs", 0),
             "Eligibility": s.eligibility_status,
-            
             "Resume Link": app_entry.resume_link if app_entry and app_entry.resume_link else s.resume_link or "",
-        })
+        }
+
+        # 2. Dynamically add the custom company fields!
+        if app_entry and app_entry.extra_data:
+            import json # Ensure json is imported at the top of your file
+            try:
+                extra_fields = json.loads(app_entry.extra_data)
+                for key, value in extra_fields.items():
+                    # Clean up the key so "github_link" becomes "Github Link" in the Excel Header
+                    clean_header = key.replace('_', ' ').title()
+                    row_data[clean_header] = value
+            except Exception:
+                pass # Failsafe if the JSON is somehow corrupted
+
+        rows.append(row_data)
 
     df = pd.DataFrame(rows)
-
+    # ... rest of the export code remains exactly the same ...
+    
     output = io.BytesIO()
     with pd.ExcelWriter(output, engine="openpyxl") as writer:
         df.to_excel(writer, index=False, sheet_name="Applicants")
