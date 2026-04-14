@@ -250,45 +250,41 @@
                             {% endif %}
                         </div>
                         
-                        <div class="modal-footer">
+                        <div style="margin-top: 35px; display: grid; grid-template-columns: 1fr 1fr; gap: 15px; width: 100%;">
                             
-                            <div class="modal-btn-group">
-                                {% if g.user.role == "STUDENT" %}
-                                    <form action="{{ url_for('delete_application', application_id=a.id) }}" method="post" style="margin: 0;">
-                                        <button type="submit" style="height: 42px; padding: 0 20px; display: inline-flex; align-items: center; justify-content: center; background: transparent; color: #ef4444; border: 1px solid #ef4444; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px; transition: all 0.2s; width: 100%; box-sizing: border-box;" onmouseover="this.style.background='#ef4444'; this.style.color='#fff';" onmouseout="this.style.background='transparent'; this.style.color='#ef4444';" onclick="return confirm('Withdraw application?')">
-                                            Withdraw
-                                        </button>
-                                    </form>
-                                {% endif %}
-
-                                {% if g.user.role in ["ADMIN", "PLACEMENT_COORDINATOR"] %}
-                                    <form action="{{ url_for('update_application_status', application_id=a.id) }}" method="post" style="display: flex; gap: 10px; align-items: center; margin: 0; width: 100%; flex-wrap: wrap;">
-                                        <select name="status" required style="height: 42px; padding: 0 10px; background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: #fff; outline: none; font-size: 0.85rem; min-width: 120px; box-sizing: border-box; flex: 1;">
-                                            <option value="APPLIED" {% if a.status == "APPLIED" %}selected{% endif %}>APPLIED</option>
-                                            <option value="SHORTLISTED" {% if a.status == "SHORTLISTED" %}selected{% endif %}>SHORTLISTED</option>
-                                            <option value="INTERVIEW" {% if a.status == "INTERVIEW" %}selected{% endif %}>INTERVIEW</option>
-                                            <option value="SELECTED" {% if a.status == "SELECTED" %}selected{% endif %}>SELECTED</option>
-                                            <option value="REJECTED" {% if a.status == "REJECTED" %}selected{% endif %}>REJECTED</option>
-                                        </select>
-                                        <button type="submit" style="height: 42px; padding: 0 20px; display: inline-flex; align-items: center; justify-content: center; background: transparent; color: #10b981; border: 1px solid #10b981; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px; transition: all 0.2s; flex: 1; min-width: 120px; box-sizing: border-box;" onmouseover="this.style.background='#10b981'; this.style.color='#fff';" onmouseout="this.style.background='transparent'; this.style.color='#10b981';">
-                                            Save Status
-                                        </button>
-                                    </form>
-                                {% endif %}
-                            </div>
-
-                            <div class="modal-btn-group">
-                                {% if g.user.role == "STUDENT" %}
-                                <a href="{{ url_for('edit_application', application_id=a.id) }}" style="height: 42px; padding: 0 20px; display: inline-flex; align-items: center; justify-content: center; background: rgba(56, 189, 248, 0.1); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.3); border-radius: 6px; text-decoration: none; font-weight: 600; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px; transition: all 0.2s; box-sizing: border-box;" onmouseover="this.style.background='#38bdf8'; this.style.color='#fff';" onmouseout="this.style.background='rgba(56, 189, 248, 0.1)'; this.style.color='#38bdf8';">
+                            {% if g.user.role == "STUDENT" %}
+                                <a href="{{ url_for('edit_application', application_id=a.id) }}" style="height: 42px; padding: 0 20px; display: inline-flex; align-items: center; justify-content: center; background: rgba(56, 189, 248, 0.1); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.3); border-radius: 6px; text-decoration: none; font-weight: 600; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px; transition: all 0.2s; width: 100%; box-sizing: border-box;" onmouseover="this.style.background='#38bdf8'; this.style.color='#fff';" onmouseout="this.style.background='rgba(56, 189, 248, 0.1)'; this.style.color='#38bdf8';">
                                     Edit
                                 </a>
-                                {% endif %}
-                                <button onclick="document.getElementById('modal-{{ a.id }}').style.display='none'" style="height: 42px; padding: 0 20px; display: inline-flex; align-items: center; justify-content: center; background: rgba(148, 163, 184, 0.1); color: #cbd5e1; border: 1px solid rgba(148, 163, 184, 0.3); border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px; transition: all 0.2s; box-sizing: border-box;" onmouseover="this.style.background='#64748b'; this.style.color='#fff';" onmouseout="this.style.background='rgba(148, 163, 184, 0.1)'; this.style.color='#cbd5e1';">
-                                    Close Window
-                                </button>
-                            </div>
+
+                                <form action="{{ url_for('delete_application', application_id=a.id) }}" method="post" style="margin: 0; width: 100%;">
+                                    <button type="submit" style="height: 42px; padding: 0 20px; display: inline-flex; align-items: center; justify-content: center; background: transparent; color: #ef4444; border: 1px solid #ef4444; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px; transition: all 0.2s; width: 100%; box-sizing: border-box;" onmouseover="this.style.background='#ef4444'; this.style.color='#fff';" onmouseout="this.style.background='transparent'; this.style.color='#ef4444';" onclick="return confirm('Are you sure you want to withdraw this application?')">
+                                        Withdraw
+                                    </button>
+                                </form>
+                            {% endif %}
+
+                            {% if g.user.role in ["ADMIN", "PLACEMENT_COORDINATOR"] %}
+                                <form action="{{ url_for('update_application_status', application_id=a.id) }}" method="post" style="display: flex; gap: 10px; align-items: center; margin: 0; width: 100%; grid-column: span 2;">
+                                    <select name="status" required style="height: 42px; padding: 0 10px; background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: #fff; outline: none; font-size: 0.85rem; flex: 1; box-sizing: border-box;">
+                                        <option value="APPLIED" {% if a.status == "APPLIED" %}selected{% endif %}>APPLIED</option>
+                                        <option value="SHORTLISTED" {% if a.status == "SHORTLISTED" %}selected{% endif %}>SHORTLISTED</option>
+                                        <option value="INTERVIEW" {% if a.status == "INTERVIEW" %}selected{% endif %}>INTERVIEW</option>
+                                        <option value="SELECTED" {% if a.status == "SELECTED" %}selected{% endif %}>SELECTED</option>
+                                        <option value="REJECTED" {% if a.status == "REJECTED" %}selected{% endif %}>REJECTED</option>
+                                    </select>
+                                    <button type="submit" style="height: 42px; padding: 0 20px; display: inline-flex; align-items: center; justify-content: center; background: transparent; color: #10b981; border: 1px solid #10b981; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px; transition: all 0.2s; flex: 1; box-sizing: border-box;" onmouseover="this.style.background='#10b981'; this.style.color='#fff';" onmouseout="this.style.background='transparent'; this.style.color='#10b981';">
+                                        Save Status
+                                    </button>
+                                </form>
+                            {% endif %}
+
+                            <button onclick="document.getElementById('modal-{{ a.id }}').style.display='none'" style="grid-column: span 2; height: 42px; padding: 0 20px; display: inline-flex; align-items: center; justify-content: center; background: rgba(148, 163, 184, 0.1); color: #cbd5e1; border: 1px solid rgba(148, 163, 184, 0.3); border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px; transition: all 0.2s; width: 100%; box-sizing: border-box;" onmouseover="this.style.background='#64748b'; this.style.color='#fff';" onmouseout="this.style.background='rgba(148, 163, 184, 0.1)'; this.style.color='#cbd5e1';">
+                                Close Window
+                            </button>
 
                         </div>
+
                     </div>
                 </div>
 
