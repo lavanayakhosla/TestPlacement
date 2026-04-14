@@ -738,6 +738,7 @@ def dashboard():
                 text_color = "#f59e0b"
 
             display_applications.append({
+                'company': comp,
                 'company_name': comp.name,
                 'status': status,
                 'deadline': comp.application_deadline,
