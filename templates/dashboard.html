@@ -4,7 +4,7 @@
 
 <div class="grid grid-2">
   
-  {# --- YE HISSA SIRF ADMIN/COORDINATOR KO DIKHEGA (UNTOUCHED) --- #}
+  {# --- YE HISSA SIRF ADMIN/COORDINATOR KO DIKHEGA --- #}
   {% if g.user.role != 'STUDENT' %}
   <div class="card">
     <h3>Students</h3>
@@ -32,14 +32,14 @@
 
 </div>
 
-{# --- REMINDERS SECTION (SEPARATE BLOCKS FOR EACH COMPANY) --- #}
+{# --- REMINDERS SECTION (FULL WIDTH) --- #}
 {% if reminders and reminders|length > 0 %}
     {% for c in reminders %}
-    <div style="background: rgba(45, 90, 95, 0.15); border: 1px solid rgba(100, 180, 180, 0.3); border-radius: 12px; padding: 25px; margin: 20px auto; max-width: 900px; box-shadow: 0 4px 20px rgba(0,0,0,0.15);">
+    <div style="background: rgba(45, 90, 95, 0.15); border: 1px solid rgba(100, 180, 180, 0.3); border-radius: 12px; padding: 25px; margin: 20px 0; width: 100%; box-sizing: border-box; box-shadow: 0 4px 20px rgba(0,0,0,0.15);">
         
         <h3 style="color: #ffb74d; display: flex; align-items: center; gap: 10px; margin-top: 0; margin-bottom: 15px; font-weight: 500; font-size: 1.1rem; text-transform: uppercase; letter-spacing: 1px;">
             <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-            Critical Deadline Approaching
+            Deadlines Approaching
         </h3>
         
         <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; color: #e2e8f0;">
@@ -56,34 +56,70 @@
     {% endfor %}
 {% endif %}
 
-{# --- ALL APPLICATIONS SECTION FOR STUDENTS (NEW SINGLE COLUMN UI) --- #}
+{# --- ALL APPLICATIONS SECTION FOR STUDENTS (FULL WIDTH) --- #}
 {% if g.user.role == 'STUDENT' %}
-    <div style="background: rgba(30, 40, 55, 0.4); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 12px; padding: 25px; margin: 30px auto; max-width: 900px;">
-        <h3 style="color: #d1d5db; text-align: center; margin-top: 0; margin-bottom: 25px; font-weight: 500; font-size: 1.2rem;">All Applications</h3>
+    <div style="background: rgba(30, 40, 55, 0.4); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 12px; padding: 25px; margin: 30px 0; width: 100%; box-sizing: border-box;">
+        
+        <h3 style="color: #d1d5db; text-align: left; margin-top: 0; margin-bottom: 25px; font-weight: 500; font-size: 1.3rem;">All Applications</h3>
 
         <div style="display: flex; flex-direction: column; gap: 12px;">
-            {# Note: Ensure `applications`, `app.company_name`, and `app.status` match your backend variables #}
             {% if applications and applications|length > 0 %}
                 {% for app in applications %}
-                <div style="background: rgba(20, 25, 35, 0.6); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 8px; padding: 16px 24px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
+                <div style="background: rgba(20, 25, 35, 0.6); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 8px; padding: 16px 24px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
                     
                     <span style="color: #e2e8f0; font-weight: 500; display: flex; align-items: center; gap: 10px; flex: 1; min-width: 200px;">
                         <svg width="20" height="20" fill="none" stroke="#9ca3af" stroke-width="2" viewBox="0 0 24 24"><path d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
                         {{ app.company_name }}
                     </span>
+
+                    <span style="display: flex; align-items: center; gap: 5px; font-size: 0.9rem; {% if app.is_passed %}color: #ef4444; font-weight: 600;{% else %}color: #9ca3af;{% endif %} min-width: 220px;">
+                        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        Deadline: {{ app.deadline | ist }}
+                    </span>
                     
-                    <span style="background: rgba(255, 193, 7, 0.1); color: #fbbf24; padding: 6px 14px; border-radius: 20px; font-size: 0.85rem; border: 1px solid rgba(255, 193, 7, 0.2); margin-right: 20px;">
+                    <span style="background: {{ app.status_color }}; color: {{ app.text_color }}; padding: 6px 14px; border-radius: 20px; font-size: 0.85rem; border: 1px solid {{ app.status_color }}; min-width: 150px; text-align: center;">
                         {{ app.status }}
                     </span>
                     
-                    <a href="#" style="color: #d1d5db; border: 1px solid rgba(255, 255, 255, 0.2); padding: 8px 16px; border-radius: 6px; text-decoration: none; font-size: 0.9rem; transition: background 0.2s;">
-                        View Details
-                    </a>
+                    <div style="display: flex; gap: 10px;">
+                        <button onclick="document.getElementById('modal-{{ app.company.id }}').style.display='flex'" style="background: transparent; color: #d1d5db; border: 1px solid rgba(255, 255, 255, 0.2); padding: 8px 16px; border-radius: 6px; font-size: 0.9rem; cursor: pointer; transition: background 0.2s;">
+                            View Details
+                        </button>
+
+                        {% if app.status == 'Application Pending' %}
+                        <a href="{{ url_for('applications') }}" style="background: rgba(16, 185, 129, 0.1); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3); padding: 8px 16px; border-radius: 6px; text-decoration: none; font-size: 0.9rem; transition: background 0.2s;">
+                            Apply Now
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div id="modal-{{ app.company.id }}" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(5px); z-index: 1000; align-items: center; justify-content: center;">
+                    <div style="background: #1e293b; padding: 30px; border-radius: 12px; width: 90%; max-width: 500px; color: #e2e8f0; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);">
+                        
+                        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 15px; margin-bottom: 20px;">
+                            <h2 style="margin: 0; color: #fff; font-size: 1.4rem;">{{ app.company.name }}</h2>
+                            <button onclick="document.getElementById('modal-{{ app.company.id }}').style.display='none'" style="background: none; border: none; color: #9ca3af; font-size: 1.8rem; cursor: pointer; padding: 0;">&times;</button>
+                        </div>
+                        
+                        <div style="display: flex; flex-direction: column; gap: 12px; font-size: 1rem;">
+                            <div style="display: flex; justify-content: space-between;"><strong style="color:#9ca3af;">Role:</strong> <span>{{ app.company.hiring_role or 'Not specified' }}</span></div>
+                            <div style="display: flex; justify-content: space-between;"><strong style="color:#9ca3af;">Eligible Branches:</strong> <span>{{ app.company.eligible_branches }}</span></div>
+                            <div style="display: flex; justify-content: space-between;"><strong style="color:#9ca3af;">Min CGPA:</strong> <span style="color: #6ee7b7;">{{ app.company.min_cgpa }}</span></div>
+                            <div style="display: flex; justify-content: space-between;"><strong style="color:#9ca3af;">Max Backlogs:</strong> <span style="color: #fca5a5;">{{ app.company.max_backlogs }}</span></div>
+                            <div style="display: flex; justify-content: space-between;"><strong style="color:#9ca3af;">Dead Backlogs Allowed:</strong> <span>{{ 'Yes' if app.company.allow_dead_backlogs else 'No' }}</span></div>
+                            <div style="display: flex; justify-content: space-between;"><strong style="color:#9ca3af;">Selection Policy:</strong> <span>{{ app.company.selection_policy }}</span></div>
+                        </div>
+                        
+                        <div style="margin-top: 30px; text-align: right;">
+                            <button onclick="document.getElementById('modal-{{ app.company.id }}').style.display='none'" style="background: #334155; color: white; padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-weight: 500; transition: background 0.2s;">Close</button>
+                        </div>
+                    </div>
                 </div>
                 {% endfor %}
             {% else %}
                 <div style="text-align: center; color: #9ca3af; padding: 20px; background: rgba(0,0,0,0.2); border-radius: 8px;">
-                    No applications submitted yet.
+                    No companies configured yet.
                 </div>
             {% endif %}
         </div>
