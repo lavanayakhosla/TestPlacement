@@ -654,8 +654,54 @@ def resolve_source(source: str, application: Application):
 
 @app.route("/")
 @login_required
+# def dashboard():
+#     reminders = []
+    
+#     # 1. Base Counts (Default values for Students)
+#     s_count = 0
+#     c_count = 0
+#     a_count = 0
+
+#     # 2. Agar user STUDENT hai
+#     if g.user.role == "STUDENT" and g.user.student_id:
+#         student = Student.query.get(g.user.student_id)
+        
+#         # Student ke liye reminders calculate karein
+#         now = datetime.utcnow()
+#         upcoming_deadline = now + timedelta(days=3)
+#         companies = Company.query.filter(
+#             Company.application_deadline != None,
+#             Company.application_deadline >= now,
+#             Company.application_deadline <= upcoming_deadline
+#         ).all()
+
+#         for c in companies:
+#             applied = Application.query.filter_by(student_id=student.id, company_id=c.id).first()
+#             if not applied:
+#                 eligible, _ = allowed_for_company(student, c)
+#                 if eligible:
+#                     reminders.append(c)
+        
+#         # Student ko sirf uski apni application count dikhani hai toh:
+#         a_count = Application.query.filter_by(student_id=student.id).count()
+
+#     # 3. Agar user ADMIN/COORDINATOR hai, toh asli counts nikalein
+#     else:
+#         s_count = Student.query.count()
+#         c_count = Company.query.count()
+#         a_count = Application.query.count()
+
+#     # 4. Template return karein
+#     return render_template(
+#         "dashboard.html",
+#         student_count=s_count,
+#         company_count=c_count,
+#         application_count=a_count,
+#         reminders=reminders
+#     )
 def dashboard():
     reminders = []
+    display_applications = [] # <-- NEW: List to hold all apps for the student view
     
     # 1. Base Counts (Default values for Students)
     s_count = 0
@@ -665,25 +711,59 @@ def dashboard():
     # 2. Agar user STUDENT hai
     if g.user.role == "STUDENT" and g.user.student_id:
         student = Student.query.get(g.user.student_id)
-        
-        # Student ke liye reminders calculate karein
         now = datetime.utcnow()
+        
+        # ----------------------------------------------------
+        # NEW LOGIC: Build display_applications for ALL companies
+        # ----------------------------------------------------
+        all_companies = Company.query.order_by(Company.application_deadline.asc()).all()
+        student_applications = Application.query.filter_by(student_id=student.id).all()
+        applied_company_ids = {app.company_id for app in student_applications}
+
+        for comp in all_companies:
+            # Check if deadline has passed
+            is_passed = comp.application_deadline and now > comp.application_deadline
+            
+            if comp.id in applied_company_ids:
+                status = "Application Submitted"
+                status_color = "rgba(16, 185, 129, 0.1)" # Green
+                text_color = "#10b981"
+            elif is_passed:
+                status = "Deadline Passed"
+                status_color = "rgba(239, 68, 68, 0.1)" # Red
+                text_color = "#ef4444"
+            else:
+                status = "Application Pending"
+                status_color = "rgba(245, 158, 11, 0.1)" # Yellow
+                text_color = "#f59e0b"
+
+            display_applications.append({
+                'company_name': comp.name,
+                'status': status,
+                'deadline': comp.application_deadline,
+                'is_passed': is_passed,
+                'status_color': status_color,
+                'text_color': text_color
+            })
+
+        # ----------------------------------------------------
+        # EXISTING LOGIC: Student ke liye 3-day reminders calculate karein
+        # ----------------------------------------------------
         upcoming_deadline = now + timedelta(days=3)
-        companies = Company.query.filter(
+        companies_for_reminders = Company.query.filter(
             Company.application_deadline != None,
             Company.application_deadline >= now,
             Company.application_deadline <= upcoming_deadline
         ).all()
 
-        for c in companies:
-            applied = Application.query.filter_by(student_id=student.id, company_id=c.id).first()
-            if not applied:
+        for c in companies_for_reminders:
+            if c.id not in applied_company_ids: # Used the faster set we created above
                 eligible, _ = allowed_for_company(student, c)
                 if eligible:
                     reminders.append(c)
         
         # Student ko sirf uski apni application count dikhani hai toh:
-        a_count = Application.query.filter_by(student_id=student.id).count()
+        a_count = len(student_applications)
 
     # 3. Agar user ADMIN/COORDINATOR hai, toh asli counts nikalein
     else:
@@ -697,7 +777,8 @@ def dashboard():
         student_count=s_count,
         company_count=c_count,
         application_count=a_count,
-        reminders=reminders
+        reminders=reminders,
+        applications=display_applications  # <-- NEW: Pass the list to the HTML
     )
 
 @app.route("/students", methods=["GET", "POST"])
