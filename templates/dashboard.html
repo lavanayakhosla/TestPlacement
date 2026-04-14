@@ -1,129 +1,199 @@
 {% extends "base.html" %}
 {% block content %}
-<h1>Campus Placement Portal</h1>
 
-<div class="grid grid-2">
-  
-  {# --- YE HISSA SIRF ADMIN/COORDINATOR KO DIKHEGA --- #}
-  {% if g.user.role != 'STUDENT' %}
-  <div class="card">
-    <h3>Students</h3>
-    <p><b>{{ student_count }}</b> registered</p>
-  </div>
-  <div class="card">
-    <h3>Companies</h3>
-    <p><b>{{ company_count }}</b> configured</p>
-  </div>
-  <div class="card">
-    <h3>Applications</h3>
-    <p><b>{{ application_count }}</b> submitted</p>
-  </div>
-   <div class="card">
-    <h3>What This Supports</h3>
-    <ul>
-      <li>Company-wise custom Excel export format</li>
-      <li>Semester PDF SGPA import with lateral student handling</li>
-      <li>Resume link field per student for export-ready profiles</li>
-      <li>Blocking vs non-blocking company selection policy</li>
-      <li>Backlog update log and automatic CGPA/backlog recalculation</li>
-    </ul>
-  </div>
-  {% endif %}
+<style>
+    /* =========================================
+       UNIVERSAL FONT ENFORCEMENT & LAYOUT
+       ========================================= */
+    .dashboard-wrapper, 
+    .dashboard-wrapper button, 
+    .dashboard-wrapper a,
+    .dashboard-wrapper span,
+    .modal-overlay,
+    .modal-content,
+    .modal-content button {
+        font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
+    }
+
+    .dashboard-wrapper { width: 100%; padding: 20px 40px; box-sizing: border-box; display: flex; flex-direction: column; gap: 40px; }
+    .page-title { color: #e2e8f0; font-size: 1.8rem; margin: 0; font-weight: 500; }
+    
+    /* Reminder Card */
+    .reminder-card { background: rgba(45, 90, 95, 0.15); border: 1px solid rgba(100, 180, 180, 0.3); border-radius: 12px; padding: 25px; width: 100%; box-sizing: border-box; box-shadow: 0 4px 20px rgba(0,0,0,0.15); }
+    .reminder-header { color: #ffb74d; display: flex; align-items: center; gap: 10px; margin-top: 0; margin-bottom: 15px; font-weight: 500; font-size: 1.1rem; text-transform: uppercase; letter-spacing: 1px; }
+    .reminder-body { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; color: #e2e8f0; }
+
+    /* Glass Section */
+    .glass-section { background: rgba(30, 40, 55, 0.4); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 12px; padding: 30px; width: 100%; box-sizing: border-box; }
+    .section-title { color: #d1d5db; text-align: left; margin-top: 0; margin-bottom: 25px; font-weight: 500; font-size: 1.3rem; }
+
+    /* App Row */
+    .app-row { background: rgba(20, 25, 35, 0.6); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 8px; padding: 16px 24px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; }
+    .app-col { display: flex; align-items: center; gap: 10px; }
+    
+    /* Unified Buttons */
+    .action-btn { height: 42px; padding: 0 20px; display: inline-flex; align-items: center; justify-content: center; border-radius: 6px; font-size: 0.85rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; transition: all 0.2s; box-sizing: border-box; cursor: pointer; text-decoration: none; white-space: nowrap; }
+    .btn-outline { background: transparent; color: #d1d5db; border: 1px solid rgba(255, 255, 255, 0.25); }
+    .btn-outline:hover { background: rgba(255,255,255,0.05); color: #fff; }
+    .btn-apply { background: rgba(16, 185, 129, 0.1); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3); }
+    .btn-apply:hover { background: #10b981; color: #fff; }
+    .btn-close { background: rgba(148, 163, 184, 0.1); color: #cbd5e1; border: 1px solid rgba(148, 163, 184, 0.3); }
+    .btn-close:hover { background: #64748b; color: #fff; }
+
+    /* Modal */
+    .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(8px); z-index: 1000; align-items: center; justify-content: center; padding: 15px; box-sizing: border-box; }
+    .modal-content { background: #1e293b; padding: 35px; border-radius: 16px; width: 100%; max-width: 500px; max-height: 90vh; overflow-y: auto; color: #e2e8f0; border: 1px solid rgba(100, 180, 180, 0.2); box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); box-sizing: border-box; }
+
+    /* =========================================
+       MOBILE RESPONSIVE RULES
+       ========================================= */
+    @media (max-width: 768px) {
+        .dashboard-wrapper { padding: 15px; gap: 25px; }
+        .page-title { font-size: 1.5rem; }
+        
+        /* Force admin grid to stack on mobile */
+        .grid-2 { grid-template-columns: 1fr !important; display: grid; gap: 15px; }
+        
+        .reminder-card, .glass-section { padding: 20px; }
+        .reminder-body { flex-direction: column; align-items: flex-start; }
+        
+        /* Stack app rows vertically */
+        .app-row { flex-direction: column; align-items: flex-start; padding: 20px 15px; }
+        .app-col { width: 100%; }
+        
+        .app-actions { display: flex; flex-direction: column; width: 100%; gap: 10px; margin-top: 10px; }
+        .action-btn { width: 100%; }
+
+        .modal-content { padding: 25px; }
+    }
+</style>
+
+<div class="dashboard-wrapper">
+
+    <h2 class="page-title">Campus Placement Portal</h2>
+
+    <div class="grid grid-2">
+        {# --- YE HISSA SIRF ADMIN/COORDINATOR KO DIKHEGA --- #}
+        {% if g.user.role != 'STUDENT' %}
+        <div class="card">
+            <h3>Students</h3>
+            <p><b>{{ student_count }}</b> registered</p>
+        </div>
+        <div class="card">
+            <h3>Companies</h3>
+            <p><b>{{ company_count }}</b> configured</p>
+        </div>
+        <div class="card">
+            <h3>Applications</h3>
+            <p><b>{{ application_count }}</b> submitted</p>
+        </div>
+         <div class="card">
+            <h3>What This Supports</h3>
+            <ul>
+                <li>Company-wise custom Excel export format</li>
+                <li>Semester PDF SGPA import with lateral student handling</li>
+                <li>Resume link field per student for export-ready profiles</li>
+                <li>Blocking vs non-blocking company selection policy</li>
+                <li>Backlog update log and automatic CGPA/backlog recalculation</li>
+            </ul>
+        </div>
+        {% endif %}
+    </div>
+
+    {# --- REMINDERS SECTION --- #}
+    {% if reminders and reminders|length > 0 %}
+        {% for c in reminders %}
+        <div class="reminder-card">
+            <h3 class="reminder-header">
+                <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                Deadlines Approaching
+            </h3>
+            <div class="reminder-body">
+                <span class="app-col" style="font-size: 1.2rem; font-weight: 600;">
+                    <svg width="22" height="22" fill="none" stroke="#a7c7c7" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
+                    {{ c.name }}
+                </span>
+                <span class="app-col" style="color: #cbd5e1; font-size: 1rem;">
+                    <strong style="color: #fff;">Due:</strong> {{ c.application_deadline | ist }}
+                </span>
+            </div>
+        </div>
+        {% endfor %}
+    {% endif %}
+
+    {# --- ALL APPLICATIONS SECTION FOR STUDENTS --- #}
+    {% if g.user.role == 'STUDENT' %}
+        <div class="glass-section">
+            <h3 class="section-title">All Applications</h3>
+
+            <div style="display: flex; flex-direction: column; gap: 12px;">
+                {% if applications and applications|length > 0 %}
+                    {% for app in applications %}
+                    
+                    <div class="app-row">
+                        
+                        <span class="app-col" style="color: #e2e8f0; font-weight: 500; flex: 1; min-width: 200px;">
+                            <svg width="20" height="20" fill="none" stroke="#9ca3af" stroke-width="2" viewBox="0 0 24 24"><path d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+                            {{ app.company_name }}
+                        </span>
+
+                        <span class="app-col" style="font-size: 0.9rem; {% if app.is_passed %}color: #ef4444; font-weight: 600;{% else %}color: #9ca3af;{% endif %} min-width: 220px;">
+                            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            Deadline: {{ app.deadline | ist }}
+                        </span>
+                        
+                        <div class="app-col" style="min-width: 150px;">
+                            <span style="background: {{ app.status_color }}; color: {{ app.text_color }}; padding: 6px 14px; border-radius: 20px; font-size: 0.85rem; border: 1px solid {{ app.status_color }}; width: 100%; text-align: center; font-weight: 500;">
+                                {{ app.status }}
+                            </span>
+                        </div>
+                        
+                        <div class="app-actions" style="display: flex; gap: 10px;">
+                            <button onclick="document.getElementById('modal-{{ app.company.id }}').style.display='flex'" class="action-btn btn-outline">
+                                View Details
+                            </button>
+
+                            {% if app.status == 'Application Pending' %}
+                            <a href="{{ url_for('applications') }}" class="action-btn btn-apply">
+                                Apply Now
+                            </a>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div id="modal-{{ app.company.id }}" class="modal-overlay">
+                        <div class="modal-content">
+                            
+                            <div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 15px; margin-bottom: 20px;">
+                                <h2 style="margin: 0; color: #fff; font-size: 1.5rem; line-height: 1.3;">{{ app.company.name }}</h2>
+                            </div>
+                            
+                            <div style="display: flex; flex-direction: column; gap: 14px; font-size: 0.95rem; background: rgba(0,0,0,0.2); border-radius: 8px; border: 1px solid rgba(255,255,255,0.05); padding: 15px 20px;">
+                                <div style="display: flex; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 10px;"><strong style="color:#9ca3af;">Role:</strong> <span style="text-align: right;">{{ app.company.hiring_role or 'Not specified' }}</span></div>
+                                <div style="display: flex; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 10px;"><strong style="color:#9ca3af;">Eligible Branches:</strong> <span style="text-align: right;">{{ app.company.eligible_branches }}</span></div>
+                                <div style="display: flex; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 10px;"><strong style="color:#9ca3af;">Min CGPA:</strong> <span style="color: #6ee7b7; text-align: right; font-weight: 600;">{{ app.company.min_cgpa }}</span></div>
+                                <div style="display: flex; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 10px;"><strong style="color:#9ca3af;">Max Backlogs:</strong> <span style="color: #fca5a5; text-align: right;">{{ app.company.max_backlogs }}</span></div>
+                                <div style="display: flex; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 10px;"><strong style="color:#9ca3af;">Dead Backlogs:</strong> <span style="text-align: right;">{{ 'Allowed' if app.company.allow_dead_backlogs else 'Not Allowed' }}</span></div>
+                                <div style="display: flex; justify-content: space-between;"><strong style="color:#9ca3af;">Selection Policy:</strong> <span style="text-align: right;">{{ app.company.selection_policy }}</span></div>
+                            </div>
+                            
+                            <div style="margin-top: 30px; text-align: right;">
+                                <button onclick="document.getElementById('modal-{{ app.company.id }}').style.display='none'" class="action-btn btn-close" style="width: 100%;">
+                                    Close Window
+                                </button>
+                            </div>
+
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div style="text-align: center; color: #9ca3af; padding: 30px; background: rgba(0,0,0,0.2); border-radius: 8px;">
+                        No companies configured yet.
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    {% endif %}
 
 </div>
-
-{# --- REMINDERS SECTION (FULL WIDTH) --- #}
-{% if reminders and reminders|length > 0 %}
-    {% for c in reminders %}
-    <div style="background: rgba(45, 90, 95, 0.15); border: 1px solid rgba(100, 180, 180, 0.3); border-radius: 12px; padding: 25px; margin: 20px 0; width: 100%; box-sizing: border-box; box-shadow: 0 4px 20px rgba(0,0,0,0.15);">
-        
-        <h3 style="color: #ffb74d; display: flex; align-items: center; gap: 10px; margin-top: 0; margin-bottom: 15px; font-weight: 500; font-size: 1.1rem; text-transform: uppercase; letter-spacing: 1px;">
-            <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-            Deadlines Approaching
-        </h3>
-        
-        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; color: #e2e8f0;">
-            <span style="display: flex; align-items: center; gap: 10px; font-size: 1.2rem; font-weight: 600;">
-                <svg width="22" height="22" fill="none" stroke="#a7c7c7" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
-                {{ c.name }}
-            </span>
-            <span style="display: flex; align-items: center; gap: 8px; color: #cbd5e1; font-size: 1rem;">
-                <strong style="color: #fff;">Due:</strong> {{ c.application_deadline | ist }}
-            </span>
-        </div>
-        
-    </div>
-    {% endfor %}
-{% endif %}
-
-{# --- ALL APPLICATIONS SECTION FOR STUDENTS (FULL WIDTH) --- #}
-{% if g.user.role == 'STUDENT' %}
-    <div style="background: rgba(30, 40, 55, 0.4); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 12px; padding: 25px; margin: 30px 0; width: 100%; box-sizing: border-box;">
-        
-        <h3 style="color: #d1d5db; text-align: left; margin-top: 0; margin-bottom: 25px; font-weight: 500; font-size: 1.3rem;">All Applications</h3>
-
-        <div style="display: flex; flex-direction: column; gap: 12px;">
-            {% if applications and applications|length > 0 %}
-                {% for app in applications %}
-                <div style="background: rgba(20, 25, 35, 0.6); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 8px; padding: 16px 24px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
-                    
-                    <span style="color: #e2e8f0; font-weight: 500; display: flex; align-items: center; gap: 10px; flex: 1; min-width: 200px;">
-                        <svg width="20" height="20" fill="none" stroke="#9ca3af" stroke-width="2" viewBox="0 0 24 24"><path d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
-                        {{ app.company_name }}
-                    </span>
-
-                    <span style="display: flex; align-items: center; gap: 5px; font-size: 0.9rem; {% if app.is_passed %}color: #ef4444; font-weight: 600;{% else %}color: #9ca3af;{% endif %} min-width: 220px;">
-                        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                        Deadline: {{ app.deadline | ist }}
-                    </span>
-                    
-                    <span style="background: {{ app.status_color }}; color: {{ app.text_color }}; padding: 6px 14px; border-radius: 20px; font-size: 0.85rem; border: 1px solid {{ app.status_color }}; min-width: 150px; text-align: center;">
-                        {{ app.status }}
-                    </span>
-                    
-                    <div style="display: flex; gap: 10px;">
-                        <button onclick="document.getElementById('modal-{{ app.company.id }}').style.display='flex'" style="background: transparent; color: #d1d5db; border: 1px solid rgba(255, 255, 255, 0.2); padding: 8px 16px; border-radius: 6px; font-size: 0.9rem; cursor: pointer; transition: background 0.2s;">
-                            View Details
-                        </button>
-
-                        {% if app.status == 'Application Pending' %}
-                        <a href="{{ url_for('applications') }}" style="background: rgba(16, 185, 129, 0.1); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3); padding: 8px 16px; border-radius: 6px; text-decoration: none; font-size: 0.9rem; transition: background 0.2s;">
-                            Apply Now
-                        </a>
-                        {% endif %}
-                    </div>
-                </div>
-
-                <div id="modal-{{ app.company.id }}" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(5px); z-index: 1000; align-items: center; justify-content: center;">
-                    <div style="background: #1e293b; padding: 30px; border-radius: 12px; width: 90%; max-width: 500px; color: #e2e8f0; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);">
-                        
-                        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 15px; margin-bottom: 20px;">
-                            <h2 style="margin: 0; color: #fff; font-size: 1.4rem;">{{ app.company.name }}</h2>
-                           
-                        </div>
-                        
-                        <div style="display: flex; flex-direction: column; gap: 12px; font-size: 1rem;">
-                            <div style="display: flex; justify-content: space-between;"><strong style="color:#9ca3af;">Role:</strong> <span>{{ app.company.hiring_role or 'Not specified' }}</span></div>
-                            <div style="display: flex; justify-content: space-between;"><strong style="color:#9ca3af;">Eligible Branches:</strong> <span>{{ app.company.eligible_branches }}</span></div>
-                            <div style="display: flex; justify-content: space-between;"><strong style="color:#9ca3af;">Min CGPA:</strong> <span style="color: #6ee7b7;">{{ app.company.min_cgpa }}</span></div>
-                            <div style="display: flex; justify-content: space-between;"><strong style="color:#9ca3af;">Max Backlogs:</strong> <span style="color: #fca5a5;">{{ app.company.max_backlogs }}</span></div>
-                            <div style="display: flex; justify-content: space-between;"><strong style="color:#9ca3af;">Dead Backlogs Allowed:</strong> <span>{{ 'Yes' if app.company.allow_dead_backlogs else 'No' }}</span></div>
-                            <div style="display: flex; justify-content: space-between;"><strong style="color:#9ca3af;">Selection Policy:</strong> <span>{{ app.company.selection_policy }}</span></div>
-                        </div>
-                        
-                        <div style="margin-top: 30px; text-align: right;">
-                            <button onclick="document.getElementById('modal-{{ app.company.id }}').style.display='none'" style="background: #334155; color: white; padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-weight: 500; transition: background 0.2s;">Close</button>
-                        </div>
-                    </div>
-                </div>
-                {% endfor %}
-            {% else %}
-                <div style="text-align: center; color: #9ca3af; padding: 20px; background: rgba(0,0,0,0.2); border-radius: 8px;">
-                    No companies configured yet.
-                </div>
-            {% endif %}
-        </div>
-    </div>
-{% endif %}
-
 {% endblock %}
