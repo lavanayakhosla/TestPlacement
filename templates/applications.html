@@ -1,11 +1,69 @@
 {% extends "base.html" %}
 {% block content %}
-<div style="width: 100%; padding: 20px 40px; box-sizing: border-box; font-family: sans-serif; display: flex; flex-direction: column; gap: 40px;">
-    
-    <h2 style="color: #e2e8f0; font-size: 1.8rem; margin: 0; font-weight: 500;">Applications Dashboard</h2>
 
-    <div style="background: rgba(30, 40, 55, 0.4); border: 1px solid rgba(100, 180, 180, 0.3); border-radius: 12px; padding: 35px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); width: 100%;">
-        <h3 style="color: #a7c7c7; margin-top: 0; margin-bottom: 25px; font-size: 1.3rem; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid rgba(167, 199, 199, 0.1); padding-bottom: 15px;">
+<style>
+    /* =========================================
+       UNIVERSAL FONT ENFORCEMENT
+       Forces all text, buttons, and inputs to match
+       ========================================= */
+    .dashboard-container, 
+    .modal-content, 
+    .dashboard-container button, 
+    .dashboard-container input, 
+    .dashboard-container select, 
+    .dashboard-container textarea,
+    .modal-content button,
+    .modal-content select {
+        font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
+    }
+
+    /* Responsive Layout Classes */
+    .dashboard-container { width: 100%; padding: 20px 40px; box-sizing: border-box; display: flex; flex-direction: column; gap: 40px; }
+    .page-title { color: #e2e8f0; font-size: 1.8rem; margin: 0; font-weight: 500; }
+    .glass-section { background: rgba(30, 40, 55, 0.4); border: 1px solid rgba(100, 180, 180, 0.3); border-radius: 12px; padding: 35px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); width: 100%; box-sizing: border-box; }
+    .admin-section { background: rgba(45, 90, 95, 0.15); border: 1px solid rgba(100, 180, 180, 0.3); border-radius: 12px; padding: 25px; width: 100%; box-sizing: border-box; }
+    
+    .section-header { color: #a7c7c7; margin-top: 0; margin-bottom: 25px; font-size: 1.3rem; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid rgba(167, 199, 199, 0.1); padding-bottom: 15px; }
+    .admin-header { color: #cbd5e1; margin-top: 0; margin-bottom: 20px; font-size: 1.2rem; }
+    
+    .app-card { background: rgba(20, 25, 35, 0.6); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 8px; padding: 20px 25px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px; }
+    
+    .modal-content { background: #1e293b; padding: 40px; border-radius: 16px; width: 90%; max-width: 600px; max-height: 90vh; overflow-y: auto; color: #e2e8f0; border: 1px solid rgba(100, 180, 180, 0.2); box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); }
+    .modal-footer { margin-top: 35px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; }
+    .modal-btn-group { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+
+    /* Mobile Responsive Rules */
+    @media (max-width: 768px) {
+        .dashboard-container { padding: 15px; gap: 25px; }
+        .page-title { font-size: 1.5rem; }
+        .glass-section { padding: 20px; }
+        .admin-section { padding: 20px; }
+        
+        .section-header { font-size: 1.15rem; margin-bottom: 15px; padding-bottom: 10px; }
+        .admin-header { font-size: 1.1rem; }
+        
+        /* Stack the application cards */
+        .app-card { flex-direction: column; align-items: flex-start; gap: 15px; padding: 15px; }
+        .app-card > div, .app-card > span, .app-card > button { width: 100%; box-sizing: border-box; text-align: left; }
+        
+        /* Make form elements full width */
+        select, input, textarea, button { width: 100% !important; box-sizing: border-box; }
+        form[action="{{ url_for('export_applicants') }}"] { flex-direction: column; align-items: stretch; gap: 10px; }
+        
+        /* Adjust Modal for Mobile */
+        .modal-content { padding: 20px; width: 95%; }
+        .modal-footer { flex-direction: column; align-items: stretch; gap: 15px; }
+        .modal-btn-group { flex-direction: column; align-items: stretch; width: 100%; }
+        .modal-btn-group form, .modal-btn-group a, .modal-btn-group button { width: 100%; text-align: center; }
+    }
+</style>
+
+<div class="dashboard-container">
+    
+    <h2 class="page-title">Applications Dashboard</h2>
+
+    <div class="glass-section">
+        <h3 class="section-header">
             <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"></path></svg>
             Apply to Company
         </h3>
@@ -51,9 +109,9 @@
 
             {# --- EXTERNAL LINK BANNER --- #}
             <div id="company-apply-link-container" style="margin: 15px 0 25px 0; padding: 12px; background: rgba(56, 189, 248, 0.1); border: 1px solid rgba(56, 189, 248, 0.3); border-radius: 8px; display: none;">
-                <p style="margin: 0; font-size: 0.95rem; color: #e2e8f0; display: flex; justify-content: space-between; align-items: center;">
+                <p style="margin: 0; font-size: 0.95rem; color: #e2e8f0; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
                     <span><strong>External Link Required:</strong> You must also apply on the company portal.</span>
-                    <a id="company-apply-link" href="#" target="_blank" rel="noopener noreferrer" style="color: #38bdf8; font-weight: bold; text-decoration: none; padding: 6px 12px; background: rgba(56, 189, 248, 0.15); border-radius: 4px;">Visit Portal ↗</a>
+                    <a id="company-apply-link" href="#" target="_blank" rel="noopener noreferrer" style="color: #38bdf8; font-weight: bold; text-decoration: none; padding: 6px 12px; background: rgba(56, 189, 248, 0.15); border-radius: 4px; display: inline-block; text-align: center;">Visit Portal ↗</a>
                 </p>
             </div>
 
@@ -68,8 +126,8 @@
     </div>
 
     {% if g.user.role in ["ADMIN", "PLACEMENT_COORDINATOR"] %}
-    <div style="background: rgba(45, 90, 95, 0.15); border: 1px solid rgba(100, 180, 180, 0.3); border-radius: 12px; padding: 25px; width: 100%;">
-        <h3 style="color: #cbd5e1; margin-top: 0; margin-bottom: 20px; font-size: 1.2rem;">Admin: Download Applicants</h3>
+    <div class="admin-section">
+        <h3 class="admin-header">Admin: Download Applicants</h3>
         <form method="get" action="{{ url_for('export_applicants') }}" style="display: flex; gap: 15px; flex-wrap: wrap; align-items: flex-end;">
             
             <div style="flex: 1; min-width: 200px;">
@@ -99,14 +157,14 @@
     </div>
     {% endif %}
 
-    <div style="background: rgba(30, 40, 55, 0.4); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 12px; padding: 35px; width: 100%;">
-        <h3 style="color: #d1d5db; margin-top: 0; margin-bottom: 25px; font-size: 1.3rem;">Submitted Applications</h3>
+    <div class="glass-section" style="padding-bottom: 35px;">
+        <h3 class="section-header" style="color: #d1d5db; border-bottom: none; padding-bottom: 0;">Submitted Applications</h3>
 
         <div style="display: flex; flex-direction: column; gap: 15px;">
             {% if applications and applications|length > 0 %}
                 {% for a in applications %}
                 
-                <div style="background: rgba(20, 25, 35, 0.6); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 8px; padding: 20px 25px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px;">
+                <div class="app-card">
                     
                     <div style="display: flex; flex-direction: column; flex: 1; min-width: 200px;">
                         <strong style="color: #f8fafc; font-size: 1.15rem; margin-bottom: 6px;">{{ a.company.name }}</strong>
@@ -123,7 +181,7 @@
                         {{ a.applied_at | ist }}
                     </div>
 
-                    <span style="background: rgba(245, 158, 11, 0.1); color: #f59e0b; padding: 6px 14px; border-radius: 20px; font-size: 0.85rem; border: 1px solid rgba(245, 158, 11, 0.2); text-align: center; min-width: 130px;">
+                    <span style="background: rgba(245, 158, 11, 0.1); color: #f59e0b; padding: 6px 14px; border-radius: 20px; font-size: 0.85rem; border: 1px solid rgba(245, 158, 11, 0.2); text-align: center; min-width: 130px; display: inline-block;">
                         {{ a.status }}
                     </span>
 
@@ -132,11 +190,11 @@
                     </button>
                 </div>
 
-                <div id="modal-{{ a.id }}" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(8px); z-index: 1000; align-items: center; justify-content: center;">
-                    <div style="background: #1e293b; padding: 40px; border-radius: 16px; width: 90%; max-width: 600px; max-height: 90vh; overflow-y: auto; color: #e2e8f0; border: 1px solid rgba(100, 180, 180, 0.2); box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);">
+                <div id="modal-{{ a.id }}" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(8px); z-index: 1000; align-items: center; justify-content: center; padding: 10px; box-sizing: border-box;">
+                    <div class="modal-content">
                         
                         <div style="border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 20px; margin-bottom: 25px;">
-                            <h2 style="margin: 0 0 16px 0; color: #f8fafc; font-size: 1.8rem; font-weight: 600; letter-spacing: 0.5px;">{{ a.company.name }}</h2>
+                            <h2 style="margin: 0 0 16px 0; color: #f8fafc; font-size: 1.6rem; font-weight: 600; letter-spacing: 0.5px; line-height: 1.2;">{{ a.company.name }}</h2>
                             <div style="display: flex; flex-direction: column; gap: 8px;">
                                 <div style="font-size: 0.9rem;">
                                     <span style="color: #64748b; text-transform: uppercase; letter-spacing: 1px; font-weight: 600; margin-right: 8px;">Status:</span>
@@ -151,21 +209,21 @@
                         
                         <h4 style="color: #a7c7c7; margin-top: 0; margin-bottom: 15px; font-size: 1.1rem; text-transform: uppercase; letter-spacing: 1px;">Application Info</h4>
                         
-                        <div style="display: flex; flex-direction: column; gap: 0; font-size: 0.95rem; background: rgba(0,0,0,0.2); border-radius: 8px; border: 1px solid rgba(255,255,255,0.05); padding: 10px 20px;">
+                        <div style="display: flex; flex-direction: column; gap: 0; font-size: 0.95rem; background: rgba(0,0,0,0.2); border-radius: 8px; border: 1px solid rgba(255,255,255,0.05); padding: 10px 15px;">
                             
-                            <div style="display: flex; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.05); padding: 12px 0;">
-                                <strong style="color:#9ca3af;">Student:</strong> <span>{{ a.student.roll_no }} - {{ a.student.name }}</span>
+                            <div style="display: flex; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.05); padding: 12px 0; flex-wrap: wrap; gap: 5px;">
+                                <strong style="color:#9ca3af;">Student:</strong> <span style="text-align: right;">{{ a.student.roll_no }} - {{ a.student.name }}</span>
                             </div>
-                            <div style="display: flex; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.05); padding: 12px 0;">
-                                <strong style="color:#9ca3af;">Applied At:</strong> <span>{{ a.applied_at | ist }}</span>
+                            <div style="display: flex; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.05); padding: 12px 0; flex-wrap: wrap; gap: 5px;">
+                                <strong style="color:#9ca3af;">Applied At:</strong> <span style="text-align: right;">{{ a.applied_at | ist }}</span>
                             </div>
-                            <div style="display: flex; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.05); padding: 12px 0;">
-                                <strong style="color:#9ca3af;">Deadline:</strong> <span>{{ a.company.application_deadline | ist if a.company.application_deadline else "—" }}</span>
+                            <div style="display: flex; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.05); padding: 12px 0; flex-wrap: wrap; gap: 5px;">
+                                <strong style="color:#9ca3af;">Deadline:</strong> <span style="text-align: right;">{{ a.company.application_deadline | ist if a.company.application_deadline else "—" }}</span>
                             </div>
-                            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.05); padding: 12px 0;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.05); padding: 12px 0; flex-wrap: wrap; gap: 5px;">
                                 <strong style="color:#9ca3af;">Resume:</strong> 
                                 {% if a.resume_link %}
-                                <a href="{{ a.resume_link }}" target="_blank" style="color: #38bdf8; text-decoration: none;">View Document ↗</a>
+                                <a href="{{ a.resume_link }}" target="_blank" style="color: #38bdf8; text-decoration: none; word-break: break-all; text-align: right;">View Document ↗</a>
                                 {% else %}
                                 <span>Not set</span>
                                 {% endif %}
@@ -174,8 +232,8 @@
                             {% set extra = a.extra_data %}
                             {% if extra is mapping %}
                                 {% for key, value in extra.items() %}
-                                    <div style="display: flex; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.05); padding: 12px 0; gap: 15px;">
-                                        <strong style="color:#9ca3af; min-width: 120px;">{{ key.replace('_', ' ').title() }}:</strong> 
+                                    <div style="display: flex; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.05); padding: 12px 0; gap: 10px; flex-wrap: wrap;">
+                                        <strong style="color:#9ca3af; min-width: 100px;">{{ key.replace('_', ' ').title() }}:</strong> 
                                         <span style="text-align: right; word-break: break-word;">{{ value }}</span>
                                     </div>
                                 {% endfor %}
@@ -183,8 +241,8 @@
                                 {% for pair in extra.strip('{}').split(',') %}
                                     {% set kv = pair.split(':', 1) %}
                                     {% if kv|length == 2 %}
-                                    <div style="display: flex; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.05); padding: 12px 0; gap: 15px;">
-                                        <strong style="color:#9ca3af; min-width: 120px;">{{ kv[0].replace('"', '').replace('_', ' ').title().strip() }}:</strong> 
+                                    <div style="display: flex; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.05); padding: 12px 0; gap: 10px; flex-wrap: wrap;">
+                                        <strong style="color:#9ca3af; min-width: 100px;">{{ kv[0].replace('"', '').replace('_', ' ').title().strip() }}:</strong> 
                                         <span style="text-align: right; word-break: break-word;">{{ kv[1].replace('"', '').strip() }}</span>
                                     </div>
                                     {% endif %}
@@ -192,40 +250,40 @@
                             {% endif %}
                         </div>
                         
-                        <div style="margin-top: 35px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
+                        <div class="modal-footer">
                             
-                            <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                            <div class="modal-btn-group">
                                 {% if g.user.role == "STUDENT" %}
                                     <form action="{{ url_for('delete_application', application_id=a.id) }}" method="post" style="margin: 0;">
-                                        <button type="submit" style="background: transparent; color: #ef4444; border: 1px solid #ef4444; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px; transition: all 0.2s;" onmouseover="this.style.background='#ef4444'; this.style.color='#fff';" onmouseout="this.style.background='transparent'; this.style.color='#ef4444';" onclick="return confirm('Withdraw application?')">
+                                        <button type="submit" style="height: 42px; padding: 0 20px; display: inline-flex; align-items: center; justify-content: center; background: transparent; color: #ef4444; border: 1px solid #ef4444; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px; transition: all 0.2s; width: 100%; box-sizing: border-box;" onmouseover="this.style.background='#ef4444'; this.style.color='#fff';" onmouseout="this.style.background='transparent'; this.style.color='#ef4444';" onclick="return confirm('Withdraw application?')">
                                             Withdraw
                                         </button>
                                     </form>
                                 {% endif %}
 
                                 {% if g.user.role in ["ADMIN", "PLACEMENT_COORDINATOR"] %}
-                                    <form action="{{ url_for('update_application_status', application_id=a.id) }}" method="post" style="display: flex; gap: 10px; align-items: center; margin: 0;">
-                                        <select name="status" required style="padding: 10px; background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: #fff; outline: none; font-size: 0.85rem;">
+                                    <form action="{{ url_for('update_application_status', application_id=a.id) }}" method="post" style="display: flex; gap: 10px; align-items: center; margin: 0; width: 100%; flex-wrap: wrap;">
+                                        <select name="status" required style="height: 42px; padding: 0 10px; background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: #fff; outline: none; font-size: 0.85rem; min-width: 120px; box-sizing: border-box; flex: 1;">
                                             <option value="APPLIED" {% if a.status == "APPLIED" %}selected{% endif %}>APPLIED</option>
                                             <option value="SHORTLISTED" {% if a.status == "SHORTLISTED" %}selected{% endif %}>SHORTLISTED</option>
                                             <option value="INTERVIEW" {% if a.status == "INTERVIEW" %}selected{% endif %}>INTERVIEW</option>
                                             <option value="SELECTED" {% if a.status == "SELECTED" %}selected{% endif %}>SELECTED</option>
                                             <option value="REJECTED" {% if a.status == "REJECTED" %}selected{% endif %}>REJECTED</option>
                                         </select>
-                                        <button type="submit" style="background: transparent; color: #10b981; border: 1px solid #10b981; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px; transition: all 0.2s;" onmouseover="this.style.background='#10b981'; this.style.color='#fff';" onmouseout="this.style.background='transparent'; this.style.color='#10b981';">
+                                        <button type="submit" style="height: 42px; padding: 0 20px; display: inline-flex; align-items: center; justify-content: center; background: transparent; color: #10b981; border: 1px solid #10b981; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px; transition: all 0.2s; flex: 1; min-width: 120px; box-sizing: border-box;" onmouseover="this.style.background='#10b981'; this.style.color='#fff';" onmouseout="this.style.background='transparent'; this.style.color='#10b981';">
                                             Save Status
                                         </button>
                                     </form>
                                 {% endif %}
                             </div>
 
-                            <div style="display: flex; gap: 10px;">
+                            <div class="modal-btn-group">
                                 {% if g.user.role == "STUDENT" %}
-                                <a href="{{ url_for('edit_application', application_id=a.id) }}" style="background: transparent; color: #38bdf8; border: 1px solid #38bdf8; padding: 10px 20px; border-radius: 6px; text-decoration: none; font-weight: 600; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px; transition: all 0.2s; display: inline-flex; align-items: center; justify-content: center;" onmouseover="this.style.background='#38bdf8'; this.style.color='#fff';" onmouseout="this.style.background='transparent'; this.style.color='#38bdf8';">
+                                <a href="{{ url_for('edit_application', application_id=a.id) }}" style="height: 42px; padding: 0 20px; display: inline-flex; align-items: center; justify-content: center; background: rgba(56, 189, 248, 0.1); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.3); border-radius: 6px; text-decoration: none; font-weight: 600; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px; transition: all 0.2s; box-sizing: border-box;" onmouseover="this.style.background='#38bdf8'; this.style.color='#fff';" onmouseout="this.style.background='rgba(56, 189, 248, 0.1)'; this.style.color='#38bdf8';">
                                     Edit
                                 </a>
                                 {% endif %}
-                                <button onclick="document.getElementById('modal-{{ a.id }}').style.display='none'" style="background: transparent; color: #94a3b8; border: 1px solid #94a3b8; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px; transition: all 0.2s; display: inline-flex; align-items: center; justify-content: center;" onmouseover="this.style.background='#94a3b8'; this.style.color='#fff';" onmouseout="this.style.background='transparent'; this.style.color='#94a3b8';">
+                                <button onclick="document.getElementById('modal-{{ a.id }}').style.display='none'" style="height: 42px; padding: 0 20px; display: inline-flex; align-items: center; justify-content: center; background: rgba(148, 163, 184, 0.1); color: #cbd5e1; border: 1px solid rgba(148, 163, 184, 0.3); border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px; transition: all 0.2s; box-sizing: border-box;" onmouseover="this.style.background='#64748b'; this.style.color='#fff';" onmouseout="this.style.background='rgba(148, 163, 184, 0.1)'; this.style.color='#cbd5e1';">
                                     Close Window
                                 </button>
                             </div>
@@ -233,6 +291,7 @@
                         </div>
                     </div>
                 </div>
+
                 {% endfor %}
             {% else %}
                 <div style="text-align: center; color: #9ca3af; padding: 30px; background: rgba(0,0,0,0.2); border-radius: 8px;">
@@ -244,7 +303,6 @@
 </div>
 
 <script>
-// Load Company data into JS
 const companyData = {
     {% for c in companies %}
     "{{ c.id }}": {
