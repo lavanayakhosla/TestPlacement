@@ -388,19 +388,34 @@ function loadFields(companyId) {
         let html = `<div style="margin-bottom: 12px;">`;
         html += `<label style="display:block; color:#9ca3af; font-size:0.9rem; margin-bottom:6px;">${field.label}</label>`;
         
-        const inputStyle = `width: 100%; padding: 12px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; color: #e2e8f0; font-size: 1rem; box-sizing: border-box;`;
-        
-        if (field.type === "text" || field.type === "number") {
-            html += `<input type="${field.type}" name="extra_${field.name}" style="${inputStyle}" ${field.required ? "required" : ""}>`;
-        } else if (field.type === "textarea") {
-            html += `<textarea name="extra_${field.name}" rows="3" style="${inputStyle}" ${field.required ? "required" : ""}></textarea>`;
+        // Define styles
+        const baseStyle = `width: 100%; padding: 12px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; color: #e2e8f0; font-size: 1rem; box-sizing: border-box;`;
+        const readonlyStyle = field.readonly ? `background: rgba(255,255,255,0.05); color: #94a3b8; cursor: not-allowed;` : ``;
+        const finalStyle = baseStyle + readonlyStyle;
+
+        // Check for value and readonly attributes from JSON
+        const val = field.value ? field.value : "";
+        const roAttr = field.readonly ? "readonly" : "";
+        const reqAttr = field.required ? "required" : "";
+
+        if (field.type === "textarea") {
+            html += `<textarea name="extra_${field.name}" rows="3" style="${finalStyle}" ${reqAttr}>${val}</textarea>`;
         } else if (field.type === "select") {
-            html += `<select name="extra_${field.name}" style="${inputStyle}" ${field.required ? "required" : ""}>`;
+            html += `<select name="extra_${field.name}" style="${finalStyle}" ${reqAttr}>`;
             html += `<option value="">-- Select --</option>`;
             field.options.forEach(opt => {
-                html += `<option value="${opt}">${opt}</option>`;
+                const selected = val === opt ? "selected" : "";
+                html += `<option value="${opt}" ${selected}>${opt}</option>`;
             });
             html += `</select>`;
+        } else {
+            // This block handles text, number, email, and tel
+            html += `<input type="${field.type}" 
+                            name="extra_${field.name}" 
+                            value="${val}" 
+                            style="${finalStyle}" 
+                            ${roAttr} 
+                            ${reqAttr}>`;
         }
         html += `</div>`;
         container.innerHTML += html;
