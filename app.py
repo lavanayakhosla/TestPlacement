@@ -30,7 +30,7 @@ from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import inspect, text , JSON
 from werkzeug.security import check_password_hash, generate_password_hash
 from werkzeug.utils import secure_filename
-from sqlalchemy.exc import IntegrityError
+
 
 BASE_DIR = Path(__file__).resolve().parent
 UPLOAD_ROOT = os.environ.get("UPLOAD_DIR", str(BASE_DIR / "uploads"))
@@ -1343,12 +1343,9 @@ def register():
         user = User(email=email, role=role, student_id=student_id, is_verified=False)
         user.set_password(password)
         db.session.add(user)
-        try:
-            db.session.commit()
-        except IntegrityError:
-            db.session.rollback()
-            flash("Email already registered. Please login or use Forgot Password.")
-            return redirect(url_for("register"))
+    
+        db.session.commit()
+        
         token = issue_otp(user, "VERIFY_EMAIL")
         sent = send_email(
             user.email,
