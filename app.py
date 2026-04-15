@@ -1338,6 +1338,9 @@ def register():
                 )
                 db.session.add(student)
                 db.session.flush()
+            elif User.query.filter_by(student_id=student.id).first():
+                flash("An account is already registered for this roll number. Please login.")
+                return redirect(url_for("register"))
             student_id = student.id
 
         user = User(email=email, role=role, student_id=student_id, is_verified=False)
