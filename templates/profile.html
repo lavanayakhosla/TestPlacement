@@ -119,6 +119,26 @@
     </div>
 
     <div class="glass-card" style="border-color: rgba(255, 255, 255, 0.08);">
+         <h3 class="card-title" style="color: #d1d5db;">Contact & Academic Details</h3>
+        <div style="background: rgba(0,0,0,0.2); border-radius: 8px; border: 1px solid rgba(255,255,255,0.05); padding: 25px;">
+            <form action="{{ url_for('update_student_profile_details', student_id=student.id) }}" method="post" style="display: flex; flex-direction: column; gap: 12px;">
+                <label style="color: #9ca3af; font-size: 0.95rem;">Personal Email</label>
+                <input type="email" name="personal_email" class="resume-input" value="{{ student.personal_email or '' }}" placeholder="name@gmail.com">
+                <label style="color: #9ca3af; font-size: 0.95rem;">College Email</label>
+                <input type="email" name="college_email" class="resume-input" value="{{ student.college_email or '' }}" placeholder="name@college.edu">
+                <label style="color: #9ca3af; font-size: 0.95rem;">Mobile Number</label>
+                <input name="mobile_number" class="resume-input" value="{{ student.mobile_number or '' }}" placeholder="10-digit mobile number">
+                <label style="color: #9ca3af; font-size: 0.95rem;">10th Percentage</label>
+                <input type="number" step="0.01" min="0" max="100" name="tenth_percentage" class="resume-input" value="{{ student.tenth_percentage if student.tenth_percentage is not none else '' }}" placeholder="e.g. 92.40">
+                <label style="color: #9ca3af; font-size: 0.95rem;">12th Percentage</label>
+                <input type="number" step="0.01" min="0" max="100" name="twelfth_percentage" class="resume-input" value="{{ student.twelfth_percentage if student.twelfth_percentage is not none else '' }}" placeholder="e.g. 88.20">
+                <button type="submit" class="resume-btn" style="margin-top: 6px;" onmouseover="this.style.transform='translateY(-2px)';" onmouseout="this.style.transform='translateY(0)';">
+                    Save Details
+                </button>
+            </form>
+        </div>
+    </div>
+    <div class="glass-card" style="border-color: rgba(255, 255, 255, 0.08);">
         <h3 class="card-title" style="color: #d1d5db;">Resume Link</h3>
         
         <div style="background: rgba(0,0,0,0.2); border-radius: 8px; border: 1px solid rgba(255,255,255,0.05); padding: 25px;">
