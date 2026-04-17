@@ -220,14 +220,47 @@
                             <div style="display: flex; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.05); padding: 12px 0; flex-wrap: wrap; gap: 5px;">
                                 <strong style="color:#9ca3af;">Deadline:</strong> <span style="text-align: right;">{{ a.company.application_deadline | ist if a.company.application_deadline else "—" }}</span>
                             </div>
-                            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.05); padding: 12px 0; flex-wrap: wrap; gap: 5px;">
-                                <strong style="color:#9ca3af;">Resume:</strong> 
-                                {% if a.resume_link %}
-                                <a href="{{ a.resume_link }}" target="_blank" style="color: #38bdf8; text-decoration: none; word-break: break-all; text-align: right;">View Document ↗</a>
-                                {% else %}
-                                <span>Not set</span>
-                                {% endif %}
-                            </div>
+                            {% set template_sources = a.company.export_template() | map(attribute='source') | list %}
+                            {% if "student.resume_link" in template_sources %}
+                                <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.05); padding: 12px 0; flex-wrap: wrap; gap: 5px;">
+                                    <strong style="color:#9ca3af;">Resume:</strong> 
+                                    {% if a.resume_link %}
+                                    <a href="{{ a.resume_link }}" target="_blank" style="color: #38bdf8; text-decoration: none; word-break: break-all; text-align: right;">View Document ↗</a>
+                                    {% else %}
+                                    <span>Not set</span>
+                                    {% endif %}
+                                </div>
+                            {% endif %}
+                            {% if "student.personal_email" in template_sources %}
+                                <div style="display: flex; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.05); padding: 12px 0; flex-wrap: wrap; gap: 5px;">
+                                    <strong style="color:#9ca3af;">Personal Email:</strong>
+                                    <span style="text-align: right; word-break: break-word;">{{ a.student.personal_email or "—" }}</span>
+                                </div>
+                            {% endif %}
+                            {% if "student.college_email" in template_sources %}
+                                <div style="display: flex; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.05); padding: 12px 0; flex-wrap: wrap; gap: 5px;">
+                                    <strong style="color:#9ca3af;">College Email:</strong>
+                                    <span style="text-align: right; word-break: break-word;">{{ a.student.college_email or "—" }}</span>
+                                </div>
+                            {% endif %}
+                            {% if "student.mobile_number" in template_sources %}
+                                <div style="display: flex; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.05); padding: 12px 0; flex-wrap: wrap; gap: 5px;">
+                                    <strong style="color:#9ca3af;">Mobile Number:</strong>
+                                    <span style="text-align: right; word-break: break-word;">{{ a.student.mobile_number or "—" }}</span>
+                                </div>
+                            {% endif %}
+                            {% if "student.tenth_percentage" in template_sources %}
+                                <div style="display: flex; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.05); padding: 12px 0; flex-wrap: wrap; gap: 5px;">
+                                    <strong style="color:#9ca3af;">10th Percentage:</strong>
+                                    <span style="text-align: right; word-break: break-word;">{{ a.student.tenth_percentage if a.student.tenth_percentage is not none else "—" }}</span>
+                                </div>
+                            {% endif %}
+                            {% if "student.twelfth_percentage" in template_sources %}
+                                <div style="display: flex; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.05); padding: 12px 0; flex-wrap: wrap; gap: 5px;">
+                                    <strong style="color:#9ca3af;">12th Percentage:</strong>
+                                    <span style="text-align: right; word-break: break-word;">{{ a.student.twelfth_percentage if a.student.twelfth_percentage is not none else "—" }}</span>
+                                </div>
+                            {% endif %}
 
                             {% set extra = a.extra_data %}
                             {% if extra is mapping %}
