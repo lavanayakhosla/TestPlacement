@@ -671,6 +671,34 @@ def resolve_source(source: str, application: Application):
     return mapping.get(source, "")
 
 
+PROFILE_SOURCE_REQUIREMENTS = {
+    "student.resume_link": ("resume_link", "Resume Link"),
+    "student.personal_email": ("personal_email", "Personal Email"),
+    "student.college_email": ("college_email", "College Email"),
+    "student.mobile_number": ("mobile_number", "Mobile Number"),
+    "student.tenth_percentage": ("tenth_percentage", "10th Percentage"),
+    "student.twelfth_percentage": ("twelfth_percentage", "12th Percentage"),
+}
+
+
+def missing_required_profile_fields(student: Student, company: Company) -> list[str]:
+    required_labels = []
+    template = company.export_template()
+    if not template:
+        return required_labels
+
+    for col in template:
+        source = str(col.get("source", "")).strip()
+        if source not in PROFILE_SOURCE_REQUIREMENTS:
+            continue
+        attr_name, label = PROFILE_SOURCE_REQUIREMENTS[source]
+        value = getattr(student, attr_name, None)
+        if value is None or (isinstance(value, str) and not value.strip()):
+            if label not in required_labels:
+                required_labels.append(label)
+    return required_labels
+
+
 @app.route("/")
 @login_required
 # def dashboard():
@@ -994,8 +1022,12 @@ def applications():
             )
             return redirect(url_for("applications"))
 
-        if not student.resume_link:
-            flash("No resume link found for this student. Add resume link first.")
+        missing_profile_fields = missing_required_profile_fields(student, company)
+        if missing_profile_fields:
+            flash(
+                "Application blocked: complete profile fields first: "
+                + ", ".join(missing_profile_fields)
+            )
             return redirect(url_for("applications"))
         fields = json.loads(company.extra_fields_json or "[]")
         extra_data = {}
@@ -1044,7 +1076,14 @@ def applications():
         c.id: json.loads(c.extra_fields_json or "[]")
         for c in companies
     }
-    return render_template("applications.html", applications=apps, students=students, companies=companies, company_fields=company_fields)
+    return render_template(
+        "applications.html",
+        applications=apps,
+        students=students,
+        companies=companies,
+        company_fields=company_fields,
+        now_utc=datetime.utcnow(),
+    )
 
 
 @app.route("/imports/sgpa", methods=["GET", "POST"])
@@ -1634,6 +1673,9 @@ def edit_application(application_id: int):
         return redirect(url_for("applications"))
 
     company = app_entry.company
+    if company.application_deadline and datetime.utcnow() > company.application_deadline:
+        flash("Application deadline has passed. Editing is no longer allowed.")
+        return redirect(url_for("applications"))
 
     if request.method == "POST":
         # ✅ Update resume link
@@ -1680,6 +1722,9 @@ def delete_application(application_id: int):
     if g.user.role == "STUDENT":
         if g.user.student_id != app_entry.student_id:
             flash("You can delete only your own applications.")
+            return redirect(url_for("applications"))
+        if app_entry.company.application_deadline and datetime.utcnow() > app_entry.company.application_deadline:
+            flash("Application deadline has passed. Withdrawal is no longer allowed.")
             return redirect(url_for("applications"))
 
     db.session.delete(app_entry)
