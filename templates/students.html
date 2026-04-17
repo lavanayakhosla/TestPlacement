@@ -19,6 +19,12 @@
       </select>
       <input type="number" step="0.01" name="cgpa" placeholder="CGPA" />
       <input name="resume_link" placeholder="Resume Link (Drive/Dropbox URL)">
+      <input type="email" name="personal_email" placeholder="Personal Email">
+      <input type="email" name="college_email" placeholder="College Email">
+      <input name="mobile_number" placeholder="Mobile Number">
+      <input type="number" step="0.01" min="0" max="100" name="tenth_percentage" placeholder="10th Percentage">
+      <input type="number" step="0.01" min="0" max="100" name="twelfth_percentage" placeholder="12th Percentage">
+     
       <label>Eligibility Status</label>
       <select name="eligibility_status">
         <option value="ELIGIBLE">ELIGIBLE</option>
@@ -66,7 +72,13 @@
       <th>Dead Backlogs</th>
       <th>Eligibility</th>
       <th>Resume Link</th>
+      <th>Personal Email</th>
+      <th>College Email</th>
+      <th>Mobile</th>
+      <th>10th %</th>
+      <th>12th %</th>
       <th>Update Resume Link</th>
+      <th>Update Profile Details</th>
       <th>Update Eligibility</th>
       <th>Update Backlog</th>
       <th>Update SGPA</th>
@@ -85,10 +97,26 @@
       <td>{{ s.dead_backlogs }}</td>
       <td>{{ s.eligibility_status }}{% if s.block_reason %}<br><small>{{ s.block_reason }}</small>{% endif %}</td>
       <td>{{ s.resume_link or "Not set" }}</td>
+      <td>{{ s.personal_email or "Not set" }}</td>
+      <td>{{ s.college_email or "Not set" }}</td>
+      <td>{{ s.mobile_number or "Not set" }}</td>
+      <td>{{ s.tenth_percentage if s.tenth_percentage is not none else "Not set" }}</td>
+      <td>{{ s.twelfth_percentage if s.twelfth_percentage is not none else "Not set" }}</td>
+      
       <td>
         <form action="{{ url_for('update_resume_link', student_id=s.id) }}" method="post">
           <input name="resume_link" placeholder="https://..." required>
           <button type="submit">Save Link</button>
+        </form>
+      </td>
+       <td>
+        <form action="{{ url_for('update_student_profile_details', student_id=s.id) }}" method="post">
+          <input type="email" name="personal_email" value="{{ s.personal_email or '' }}" placeholder="Personal Email">
+          <input type="email" name="college_email" value="{{ s.college_email or '' }}" placeholder="College Email">
+          <input name="mobile_number" value="{{ s.mobile_number or '' }}" placeholder="Mobile Number">
+          <input type="number" step="0.01" min="0" max="100" name="tenth_percentage" value="{{ s.tenth_percentage if s.tenth_percentage is not none else '' }}" placeholder="10th %">
+          <input type="number" step="0.01" min="0" max="100" name="twelfth_percentage" value="{{ s.twelfth_percentage if s.twelfth_percentage is not none else '' }}" placeholder="12th %">
+          <button type="submit">Save Details</button>
         </form>
       </td>
       <td>
