@@ -253,15 +253,22 @@
                         <div style="margin-top: 35px; display: grid; grid-template-columns: 1fr 1fr; gap: 15px; width: 100%;">
                             
                             {% if g.user.role == "STUDENT" %}
-                                <a href="{{ url_for('edit_application', application_id=a.id) }}" style="height: 42px; padding: 0 20px; display: inline-flex; align-items: center; justify-content: center; background: rgba(56, 189, 248, 0.1); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.3); border-radius: 6px; text-decoration: none; font-weight: 600; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px; transition: all 0.2s; width: 100%; box-sizing: border-box;" onmouseover="this.style.background='#38bdf8'; this.style.color='#fff';" onmouseout="this.style.background='rgba(56, 189, 248, 0.1)'; this.style.color='#38bdf8';">
-                                    Edit
-                                </a>
+                                {% set deadline_passed = a.company.application_deadline and now_utc > a.company.application_deadline %}
+                                {% if not deadline_passed %}
+                                    <a href="{{ url_for('edit_application', application_id=a.id) }}" style="height: 42px; padding: 0 20px; display: inline-flex; align-items: center; justify-content: center; background: rgba(56, 189, 248, 0.1); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.3); border-radius: 6px; text-decoration: none; font-weight: 600; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px; transition: all 0.2s; width: 100%; box-sizing: border-box;" onmouseover="this.style.background='#38bdf8'; this.style.color='#fff';" onmouseout="this.style.background='rgba(56, 189, 248, 0.1)'; this.style.color='#38bdf8';">
+                                        Edit
+                                    </a>
 
-                                <form action="{{ url_for('delete_application', application_id=a.id) }}" method="post" style="margin: 0; width: 100%;">
-                                    <button type="submit" style="height: 42px; padding: 0 20px; display: inline-flex; align-items: center; justify-content: center; background: transparent; color: #ef4444; border: 1px solid #ef4444; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px; transition: all 0.2s; width: 100%; box-sizing: border-box;" onmouseover="this.style.background='#ef4444'; this.style.color='#fff';" onmouseout="this.style.background='transparent'; this.style.color='#ef4444';" onclick="return confirm('Are you sure you want to withdraw this application?')">
-                                        Withdraw
-                                    </button>
-                                </form>
+                                    <form action="{{ url_for('delete_application', application_id=a.id) }}" method="post" style="margin: 0; width: 100%;">
+                                        <button type="submit" style="height: 42px; padding: 0 20px; display: inline-flex; align-items: center; justify-content: center; background: transparent; color: #ef4444; border: 1px solid #ef4444; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px; transition: all 0.2s; width: 100%; box-sizing: border-box;" onmouseover="this.style.background='#ef4444'; this.style.color='#fff';" onmouseout="this.style.background='transparent'; this.style.color='#ef4444';" onclick="return confirm('Are you sure you want to withdraw this application?')">
+                                            Withdraw
+                                        </button>
+                                    </form>
+                                {% else %}
+                                    <div style="grid-column: span 2; height: 42px; display: inline-flex; align-items: center; justify-content: center; background: rgba(100, 116, 139, 0.2); color: #94a3b8; border: 1px solid rgba(148, 163, 184, 0.3); border-radius: 6px; font-weight: 600; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.5px;">
+                                        Deadline Passed - Edit/Withdraw Locked
+                                    </div>
+                                {% endif %}
                             {% endif %}
 
                             {% if g.user.role in ["ADMIN", "PLACEMENT_COORDINATOR"] %}
