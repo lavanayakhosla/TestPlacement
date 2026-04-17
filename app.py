@@ -102,6 +102,14 @@ def _parse_eligible_branches(selected):
     branches = sorted(set(b.strip() for b in selected if b and b.strip()))
     return ",".join(branches) if branches else "ALL"
 
+def _parse_optional_percentage(raw_value: str, label: str):
+    value = (raw_value or "").strip()
+    if not value:
+        return None
+    parsed = float(value)
+    if parsed < 0 or parsed > 100:
+        raise ValueError(f"{label} must be between 0 and 100.")
+    return parsed
 
 
 class Student(db.Model):
@@ -115,6 +123,11 @@ class Student(db.Model):
     total_backlogs = db.Column(db.Integer, default=0, nullable=False)
     dead_backlogs = db.Column(db.Integer, default=0, nullable=False)
     resume_link = db.Column(db.String(1024), nullable=True)
+    personal_email = db.Column(db.String(255), nullable=True)
+    college_email = db.Column(db.String(255), nullable=True)
+    mobile_number = db.Column(db.String(20), nullable=True)
+    tenth_percentage = db.Column(db.Float, nullable=True)
+    twelfth_percentage = db.Column(db.Float, nullable=True)
     eligibility_status = db.Column(db.String(32), default="ELIGIBLE", nullable=False, index=True)
     block_reason = db.Column(db.String(255), nullable=True)
     blocked_by_company_id = db.Column(db.Integer, db.ForeignKey("company.id"), nullable=True)
@@ -639,6 +652,11 @@ def resolve_source(source: str, application: Application):
         "student.backlogs": student.total_backlogs,
         "student.lateral_entry": "YES" if student.is_lateral_entry else "NO",
         "student.resume_link": student.resume_link or "",
+        "student.personal_email": student.personal_email or "",
+        "student.college_email": student.college_email or "",
+        "student.mobile_number": student.mobile_number or "",
+        "student.tenth_percentage": student.tenth_percentage if student.tenth_percentage is not None else "",
+        "student.twelfth_percentage": student.twelfth_percentage if student.twelfth_percentage is not None else "",
         "student.eligibility_status": student.eligibility_status,
         "application.status": application.status,
         "application.applied_at": application.applied_at.strftime("%Y-%m-%d %H:%M:%S"),
@@ -791,6 +809,17 @@ def students():
         if eligibility_status not in ELIGIBILITY_STATUSES:
             flash("Invalid eligibility status.")
             return redirect(url_for("students"))
+        try:
+            tenth_percentage = _parse_optional_percentage(
+                request.form.get("tenth_percentage", ""), "10th Percentage"
+            )
+            twelfth_percentage = _parse_optional_percentage(
+                request.form.get("twelfth_percentage", ""), "12th Percentage"
+            )
+        except ValueError as exc:
+            flash(str(exc))
+            return redirect(url_for("students"))
+
         student = Student(
             roll_no=request.form["roll_no"].strip().upper(),
             name=request.form["name"].strip(),
@@ -799,6 +828,11 @@ def students():
             is_lateral_entry=request.form.get("is_lateral_entry") == "on",
             current_semester=int(request.form.get("current_semester", "1")),
             resume_link=request.form.get("resume_link", "").strip() or None,
+            personal_email=request.form.get("personal_email", "").strip() or None,
+            college_email=request.form.get("college_email", "").strip() or None,
+            mobile_number=request.form.get("mobile_number", "").strip() or None,
+            tenth_percentage=tenth_percentage,
+            twelfth_percentage=twelfth_percentage,
             eligibility_status=eligibility_status,
             block_reason=request.form.get("block_reason", "").strip() or None,
         )
@@ -824,6 +858,32 @@ def update_resume_link(student_id: int):
     student.resume_link = link
     db.session.commit()
     flash("Resume link updated.")
+    if g.user.role == "STUDENT":
+        return redirect(url_for("profile"))
+    return redirect(url_for("students"))
+@app.route("/students/<int:student_id>/profile-details", methods=["POST"])
+@role_required("ADMIN", "PLACEMENT_COORDINATOR", "STUDENT")
+def update_student_profile_details(student_id: int):
+    if g.user.role == "STUDENT" and g.user.student_id != student_id:
+        flash("You can update details only for your own profile.")
+        return redirect(url_for("dashboard"))
+    student = Student.query.get_or_404(student_id)
+    student.personal_email = request.form.get("personal_email", "").strip() or None
+    student.college_email = request.form.get("college_email", "").strip() or None
+    student.mobile_number = request.form.get("mobile_number", "").strip() or None
+    try:
+        student.tenth_percentage = _parse_optional_percentage(
+            request.form.get("tenth_percentage", ""), "10th Percentage"
+        )
+        student.twelfth_percentage = _parse_optional_percentage(
+            request.form.get("twelfth_percentage", ""), "12th Percentage"
+        )
+    except ValueError as exc:
+        flash(str(exc))
+        return redirect(request.referrer or url_for("profile"))
+
+    db.session.commit()
+    flash("Profile details updated.")
     if g.user.role == "STUDENT":
         return redirect(url_for("profile"))
     return redirect(url_for("students"))
@@ -1700,6 +1760,21 @@ def ensure_schema_updates():
     student_cols = {col["name"] for col in inspector.get_columns("student")}
     if "resume_link" not in student_cols:
         db.session.execute(text("ALTER TABLE student ADD COLUMN resume_link VARCHAR(1024)"))
+        db.session.commit()
+    if "personal_email" not in student_cols:
+        db.session.execute(text("ALTER TABLE student ADD COLUMN personal_email VARCHAR(255)"))
+        db.session.commit()
+    if "college_email" not in student_cols:
+        db.session.execute(text("ALTER TABLE student ADD COLUMN college_email VARCHAR(255)"))
+        db.session.commit()
+    if "mobile_number" not in student_cols:
+        db.session.execute(text("ALTER TABLE student ADD COLUMN mobile_number VARCHAR(20)"))
+        db.session.commit()
+    if "tenth_percentage" not in student_cols:
+        db.session.execute(text("ALTER TABLE student ADD COLUMN tenth_percentage FLOAT"))
+        db.session.commit()
+    if "twelfth_percentage" not in student_cols:
+        db.session.execute(text("ALTER TABLE student ADD COLUMN twelfth_percentage FLOAT"))
         db.session.commit()
     if "eligibility_status" not in student_cols:
         db.session.execute(
