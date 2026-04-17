@@ -933,7 +933,7 @@ def companies():
         except Exception:
             flash("Invalid export template JSON.")
             return redirect(url_for("companies"))
-        extra_fields_json = request.form.get("extra_fields_json", "[]").strip()
+        extra_fields_json = request.form.get("extra_fields_json", "[]").strip() or "[]"
 
         try:
             parsed_fields = json.loads(extra_fields_json)
