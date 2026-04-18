@@ -1,5 +1,6 @@
 import io
 import json
+import math
 import os
 import re
 import smtplib
@@ -37,8 +38,9 @@ UPLOAD_ROOT = os.environ.get("UPLOAD_DIR", str(BASE_DIR / "uploads"))
 UPLOAD_DIR = Path(UPLOAD_ROOT)
 PDF_IMPORT_DIR = UPLOAD_DIR / "pdf_imports"
 BACKLOG_IMPORT_DIR = UPLOAD_DIR / "backlog_imports"
+SGPA_EXCEL_IMPORT_DIR = UPLOAD_DIR / "sgpa_excel_imports"
 
-for folder in (UPLOAD_DIR, PDF_IMPORT_DIR, BACKLOG_IMPORT_DIR):
+for folder in (UPLOAD_DIR, PDF_IMPORT_DIR, BACKLOG_IMPORT_DIR, SGPA_EXCEL_IMPORT_DIR):
     folder.mkdir(parents=True, exist_ok=True)
 
 app = Flask(__name__)
@@ -638,6 +640,82 @@ def parse_backlog_excel_rows(excel_path: Path) -> list[dict]:
         )
 
     return extracted
+
+
+def _float_from_excel_cell(val) -> float:
+    if val is None:
+        raise ValueError
+    if isinstance(val, float) and pd.isna(val):
+        raise ValueError
+    s = str(val).strip()
+    if not s or s.lower() == "nan":
+        raise ValueError
+    x = float(s)
+    if not math.isfinite(x):
+        raise ValueError
+    return x
+
+
+def _sgpa_valid(sgpa: float) -> bool:
+    return 0.0 <= sgpa <= 10.0 + 1e-6
+
+
+def parse_sgpa_excel_rows(excel_path: Path) -> list[dict]:
+    df = pd.read_excel(excel_path, dtype=str)
+    if df is None or df.empty:
+        return []
+
+    normalized = {}
+    for col in df.columns:
+        key = str(col).strip().lower().replace("_", " ")
+        normalized[key] = col
+
+    roll_col = normalized.get("roll number") or normalized.get("roll no")
+    sem_col = normalized.get("semester number") or normalized.get("semester no")
+    credits_col = normalized.get("semester credits") or normalized.get("sem credits")
+    sgpa_col = normalized.get("sgpa")
+
+    if not roll_col or not sem_col or not credits_col or not sgpa_col:
+        return []
+
+    extracted = []
+    for _, row in df.iterrows():
+        raw_roll = row.get(roll_col)
+        roll_no = _roll_string_from_excel_cell(raw_roll)
+        if not roll_no:
+            continue
+
+        sem_raw = row.get(sem_col)
+        credits_raw = row.get(credits_col)
+        sgpa_raw = row.get(sgpa_col)
+        if pd.isna(sem_raw) or pd.isna(credits_raw) or pd.isna(sgpa_raw):
+            continue
+
+        try:
+            semester_no = _int_from_excel_cell(sem_raw)
+            semester_credits = _float_from_excel_cell(credits_raw)
+            sgpa = _float_from_excel_cell(sgpa_raw)
+        except (ValueError, TypeError, OverflowError):
+            continue
+
+        if semester_no < 1 or semester_no > 8:
+            continue
+        if semester_credits <= 0:
+            continue
+        if not _sgpa_valid(sgpa):
+            continue
+
+        extracted.append(
+            {
+                "roll_no": roll_no,
+                "semester_no": semester_no,
+                "semester_credits": round(semester_credits, 2),
+                "sgpa": round(sgpa, 2),
+            }
+        )
+
+    return extracted
+
 
 @app.route("/students/<int:student_id>/update-semester", methods=["POST"])
 @role_required("ADMIN", "PLACEMENT_COORDINATOR")
@@ -1249,6 +1327,93 @@ def import_sgpa():
         return redirect(url_for("import_sgpa"))
 
     return render_template("import_sgpa.html")
+
+
+@app.route("/imports/sgpa-excel", methods=["GET", "POST"])
+@role_required("ADMIN", "PLACEMENT_COORDINATOR")
+def import_sgpa_excel():
+    if request.method == "POST":
+        branch = request.form.get("branch", "").strip().upper()
+        file = request.files.get("excel_file")
+        if not branch:
+            flash("Please select a branch.")
+            return redirect(url_for("import_sgpa_excel"))
+        if not file:
+            flash("Please upload an Excel file.")
+            return redirect(url_for("import_sgpa_excel"))
+        if not file.filename.lower().endswith((".xlsx", ".xls")):
+            flash("Only .xlsx or .xls files are supported.")
+            return redirect(url_for("import_sgpa_excel"))
+
+        safe_name = secure_filename(file.filename)
+        saved_path = SGPA_EXCEL_IMPORT_DIR / f"{datetime.utcnow().strftime('%Y%m%d%H%M%S')}_{safe_name}"
+        file.save(saved_path)
+
+        rows = parse_sgpa_excel_rows(saved_path)
+        if not rows:
+            flash(
+                "No valid rows found. Required columns: Roll Number, Semester Number, "
+                "Semester Credits, SGPA. SGPA must be 0–10; credits must be greater than 0."
+            )
+            return redirect(url_for("import_sgpa_excel"))
+
+        updated = 0
+        created_students = 0
+        skipped_lateral = 0
+        skipped_branch = 0
+
+        for row in rows:
+            student = Student.query.filter_by(roll_no=row["roll_no"]).first()
+            if not student:
+                student = Student(
+                    roll_no=row["roll_no"],
+                    name=row["roll_no"],
+                    branch=branch,
+                    current_semester=row["semester_no"],
+                )
+                db.session.add(student)
+                db.session.flush()
+                created_students += 1
+
+            if student.branch.upper() != branch:
+                skipped_branch += 1
+                continue
+            if student.is_lateral_entry and row["semester_no"] < 3:
+                skipped_lateral += 1
+                continue
+
+            perf = SemesterPerformance.query.filter_by(
+                student_id=student.id, semester_no=row["semester_no"]
+            ).first()
+            if not perf:
+                perf = SemesterPerformance(
+                    student_id=student.id,
+                    semester_no=row["semester_no"],
+                    sgpa=row["sgpa"],
+                    semester_credits=row["semester_credits"],
+                    backlog_count=0,
+                    source_file=str(saved_path),
+                )
+                db.session.add(perf)
+            else:
+                perf.sgpa = row["sgpa"]
+                perf.semester_credits = row["semester_credits"]
+                perf.source_file = str(saved_path)
+
+            student.current_semester = max(student.current_semester, row["semester_no"])
+            refresh_student_metrics(student)
+            updated += 1
+
+        db.session.commit()
+        flash(
+            f"SGPA Excel import complete. Rows applied: {updated}. "
+            f"New students: {created_students}. "
+            f"Skipped (wrong branch): {skipped_branch}. "
+            f"Skipped (lateral sem 1–2): {skipped_lateral}."
+        )
+        return redirect(url_for("import_sgpa_excel"))
+
+    return render_template("import_sgpa_excel.html")
 
 
 @app.route("/imports/backlog", methods=["GET", "POST"])
@@ -2054,5 +2219,3 @@ if __name__ == "__main__":
     port = int(os.environ.get("PORT", "5000"))
     debug = os.environ.get("FLASK_DEBUG", "false").lower() == "true"
     app.run(host="0.0.0.0", port=port, debug=debug)
-
-
