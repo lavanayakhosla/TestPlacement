@@ -563,7 +563,8 @@ def update_semester(student_id: int):
 
     semester_no = int(request.form["semester_no"])
     new_sgpa = float(request.form["sgpa"])
-    new_backlog = int(request.form.get("backlog", 0))
+    backlog_raw = request.form.get("backlog")
+    new_backlog = int(backlog_raw) if backlog_raw not in (None, "") else None
     credits = float(request.form.get("semester_credits", 0))
 
     perf = SemesterPerformance.query.filter_by(
@@ -577,12 +578,14 @@ def update_semester(student_id: int):
             semester_no=semester_no,
             sgpa=new_sgpa,
             semester_credits=credits,
-            backlog_count=new_backlog,
+            backlog_count=new_backlog if new_backlog is not None else 0,
+       
         )
         db.session.add(perf)
     else:
         perf.sgpa = new_sgpa
-        perf.backlog_count = new_backlog
+        if new_backlog is not None:
+            perf.backlog_count = new_backlog
         if credits > 0:
             perf.semester_credits = credits
 
