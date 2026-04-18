@@ -1,4 +1,4 @@
-import io
+ import io
 import json
 import os
 import re
@@ -36,8 +36,9 @@ BASE_DIR = Path(__file__).resolve().parent
 UPLOAD_ROOT = os.environ.get("UPLOAD_DIR", str(BASE_DIR / "uploads"))
 UPLOAD_DIR = Path(UPLOAD_ROOT)
 PDF_IMPORT_DIR = UPLOAD_DIR / "pdf_imports"
+BACKLOG_IMPORT_DIR = UPLOAD_DIR / "backlog_imports"
 
-for folder in (UPLOAD_DIR, PDF_IMPORT_DIR):
+for folder in (UPLOAD_DIR, PDF_IMPORT_DIR, BACKLOG_IMPORT_DIR):
     folder.mkdir(parents=True, exist_ok=True)
 
 app = Flask(__name__)
@@ -443,8 +444,7 @@ def calculate_dead_backlogs(student: Student) -> int:
 
     dead = 0
     for u in updates:
-        if u.old_backlog > 0 and u.new_backlog == 0:
-            dead += u.old_backlog   # count cleared backlogs
+        dead += max(0, u.old_backlog - u.new_backlog)
 
     return dead
 
@@ -556,6 +556,54 @@ def parse_pdf_rows(pdf_path: Path):
                     )
     return extracted
 
+
+def parse_backlog_excel_rows(excel_path: Path) -> list[dict]:
+    df = pd.read_excel(excel_path)
+    if df is None or df.empty:
+        return []
+
+    normalized = {}
+    for col in df.columns:
+        key = str(col).strip().lower().replace("_", " ")
+        normalized[key] = col
+
+    roll_col = normalized.get("roll number") or normalized.get("roll no")
+    sem_col = normalized.get("semester number") or normalized.get("semester no")
+    backlog_col = normalized.get("new backlog") or normalized.get("new backlog count")
+
+    if not roll_col or not sem_col or not backlog_col:
+        return []
+
+    extracted = []
+    for _, row in df.iterrows():
+        roll_no = str(row.get(roll_col, "")).strip()
+        if not roll_no or roll_no.lower() == "nan":
+            continue
+
+        sem_raw = row.get(sem_col)
+        backlog_raw = row.get(backlog_col)
+        if pd.isna(sem_raw) or pd.isna(backlog_raw):
+            continue
+
+        try:
+            semester_no = int(sem_raw)
+            new_backlog = int(backlog_raw)
+        except (ValueError, TypeError):
+            continue
+
+        if semester_no < 1 or semester_no > 8 or new_backlog < 0:
+            continue
+
+        extracted.append(
+            {
+                "roll_no": roll_no,
+                "semester_no": semester_no,
+                "new_backlog": new_backlog,
+            }
+        )
+
+    return extracted
+
 @app.route("/students/<int:student_id>/update-semester", methods=["POST"])
 @role_required("ADMIN", "PLACEMENT_COORDINATOR")
 def update_semester(student_id: int):
@@ -579,7 +627,6 @@ def update_semester(student_id: int):
             sgpa=new_sgpa,
             semester_credits=credits,
             backlog_count=new_backlog if new_backlog is not None else 0,
-       
         )
         db.session.add(perf)
     else:
@@ -1167,6 +1214,72 @@ def import_sgpa():
         return redirect(url_for("import_sgpa"))
 
     return render_template("import_sgpa.html")
+
+
+@app.route("/imports/backlog", methods=["GET", "POST"])
+@role_required("ADMIN", "PLACEMENT_COORDINATOR")
+def import_backlog():
+    if request.method == "POST":
+        file = request.files.get("excel_file")
+        if not file:
+            flash("Please upload an Excel file.")
+            return redirect(url_for("import_backlog"))
+        if not file.filename.lower().endswith((".xlsx", ".xls")):
+            flash("Only .xlsx or .xls files are supported.")
+            return redirect(url_for("import_backlog"))
+
+        safe_name = secure_filename(file.filename)
+        saved_path = BACKLOG_IMPORT_DIR / f"{datetime.utcnow().strftime('%Y%m%d%H%M%S')}_{safe_name}"
+        file.save(saved_path)
+
+        rows = parse_backlog_excel_rows(saved_path)
+        if not rows:
+            flash("No valid rows found. Required columns: Roll Number, Semester Number, New backlog.")
+            return redirect(url_for("import_backlog"))
+
+        updated = 0
+        skipped = 0
+        for row in rows:
+            student = Student.query.filter_by(roll_no=row["roll_no"]).first()
+            if not student:
+                skipped += 1
+                continue
+
+            perf = SemesterPerformance.query.filter_by(
+                student_id=student.id,
+                semester_no=row["semester_no"]
+            ).first()
+            if not perf:
+                skipped += 1
+                continue
+
+            old_backlog = perf.backlog_count
+            new_backlog = row["new_backlog"]
+            if new_backlog > old_backlog:
+                skipped += 1
+                continue
+
+            if new_backlog == old_backlog:
+                continue
+
+            perf.backlog_count = new_backlog
+            db.session.add(
+                BacklogUpdate(
+                    student_id=student.id,
+                    semester_no=row["semester_no"],
+                    old_backlog=old_backlog,
+                    new_backlog=new_backlog,
+                    note="Bulk backlog update via Excel import",
+                )
+            )
+            refresh_student_metrics(student)
+            updated += 1
+
+        db.session.commit()
+        flash(f"Backlog import complete. Updated: {updated}. Skipped: {skipped}.")
+        return redirect(url_for("import_backlog"))
+
+    return render_template("import_backlog.html")
 
 
 @app.route("/students/<int:student_id>/backlog", methods=["POST"])
