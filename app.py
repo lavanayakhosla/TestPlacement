@@ -557,8 +557,42 @@ def parse_pdf_rows(pdf_path: Path):
     return extracted
 
 
+def _roll_string_from_excel_cell(val) -> str | None:
+    """Normalize roll number from Excel: int/float/str without trailing '.0'. Leading zeros are only preserved if the cell is text in Excel."""
+    if val is None:
+        return None
+    if isinstance(val, float) and pd.isna(val):
+        return None
+    if isinstance(val, (int, float)) and not isinstance(val, bool):
+        if isinstance(val, float):
+            if val.is_integer():
+                val = int(val)
+            else:
+                s = str(val).strip()
+                return s.upper() if s and s.lower() != "nan" else None
+        return str(int(val))
+    s = str(val).strip()
+    if not s or s.lower() == "nan":
+        return None
+    if s.endswith(".0") and len(s) > 2 and s[:-2].isdigit():
+        s = s[:-2]
+    return s.upper()
+
+
+def _int_from_excel_cell(val) -> int:
+    if val is None:
+        raise ValueError
+    if isinstance(val, float) and pd.isna(val):
+        raise ValueError
+    s = str(val).strip()
+    if not s or s.lower() == "nan":
+        raise ValueError
+    return int(float(s))
+
+
 def parse_backlog_excel_rows(excel_path: Path) -> list[dict]:
-    df = pd.read_excel(excel_path)
+    # dtype=str helps Excel text cells come through without float coercion; leading zeros still require Text format in Excel for numeric-looking rolls.
+    df = pd.read_excel(excel_path, dtype=str)
     if df is None or df.empty:
         return []
 
@@ -576,8 +610,9 @@ def parse_backlog_excel_rows(excel_path: Path) -> list[dict]:
 
     extracted = []
     for _, row in df.iterrows():
-        roll_no = str(row.get(roll_col, "")).strip()
-        if not roll_no or roll_no.lower() == "nan":
+        raw_roll = row.get(roll_col)
+        roll_no = _roll_string_from_excel_cell(raw_roll)
+        if not roll_no:
             continue
 
         sem_raw = row.get(sem_col)
@@ -586,9 +621,9 @@ def parse_backlog_excel_rows(excel_path: Path) -> list[dict]:
             continue
 
         try:
-            semester_no = int(sem_raw)
-            new_backlog = int(backlog_raw)
-        except (ValueError, TypeError):
+            semester_no = _int_from_excel_cell(sem_raw)
+            new_backlog = _int_from_excel_cell(backlog_raw)
+        except (ValueError, TypeError, OverflowError):
             continue
 
         if semester_no < 1 or semester_no > 8 or new_backlog < 0:
@@ -2019,3 +2054,5 @@ if __name__ == "__main__":
     port = int(os.environ.get("PORT", "5000"))
     debug = os.environ.get("FLASK_DEBUG", "false").lower() == "true"
     app.run(host="0.0.0.0", port=port, debug=debug)
+
+
