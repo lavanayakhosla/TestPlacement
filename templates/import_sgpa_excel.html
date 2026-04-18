@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Import SGPA From Excel</h1>
+<div class="card">
+  <form method="post" enctype="multipart/form-data">
+    <label>Branch</label>
+    <select name="branch" required>
+      <option value="">Select branch</option>
+      {% for b in branch_choices %}<option value="{{ b }}">{{ b }}</option>{% endfor %}
+    </select>
+    <input type="file" name="excel_file" accept=".xlsx,.xls" required>
+    <button type="submit">Import Excel</button>
+  </form>
+  <p>Required columns: <code>Roll Number</code>, <code>Semester Number</code>, <code>Semester Credits</code>, <code>SGPA</code>.</p>
+  <p>Each row creates or updates that semester’s record. <strong>Existing backlog counts are not changed.</strong> New semester rows start with backlog 0.</p>
+  <p>For roll numbers starting with <code>0</code>, format the roll column as <strong>Text</strong> in Excel.</p>
+  <p>Rows must match the selected branch. Lateral-entry students: semesters 1–2 are skipped (same as PDF import).</p>
+  <p><a href="{{ url_for('import_sgpa') }}">Import SGPA from PDF instead</a></p>
+</div>
+{% endblock %}
