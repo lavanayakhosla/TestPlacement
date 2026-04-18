@@ -7,6 +7,7 @@
     <button type="submit">Import Backlog</button>
   </form>
   <p>Required columns: <code>Roll Number</code>, <code>Semester Number</code>, <code>New backlog</code>.</p>
+   <p>For roll numbers that start with <code>0</code>, format the column as <strong>Text</strong> in Excel before entering values. If Excel stores them as numbers, leading zeros are dropped and the roll will not match the database.</p>
   <p>Each row updates that semester backlog to the new value. Cleared backlog (<code>old - new</code>) is added to dead backlog automatically.</p>
 </div>
 {% endblock %}
