@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Import Backlog Updates From Excel</h1>
+<div class="card">
+  <form method="post" enctype="multipart/form-data">
+    <input type="file" name="excel_file" accept=".xlsx,.xls" required>
+    <button type="submit">Import Backlog</button>
+  </form>
+  <p>Required columns: <code>Roll Number</code>, <code>Semester Number</code>, <code>New backlog</code>.</p>
+  <p>Each row updates that semester backlog to the new value. Cleared backlog (<code>old - new</code>) is added to dead backlog automatically.</p>
+</div>
+{% endblock %}
