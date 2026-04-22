@@ -834,6 +834,24 @@ def resolve_source(source: str, application: Application):
     return mapping.get(source, "")
 
 
+def get_extra_field_label_map(company: Company) -> dict[str, str]:
+    try:
+        fields = json.loads(company.extra_fields_json or "[]")
+    except (TypeError, ValueError):
+        return {}
+    if not isinstance(fields, list):
+        return {}
+    label_map = {}
+    for field in fields:
+        if not isinstance(field, dict):
+            continue
+        name = str(field.get("name", "")).strip()
+        label = str(field.get("label", "")).strip()
+        if name:
+            label_map[name] = label or name.replace("_", " ").title()
+    return label_map
+
+
 PROFILE_SOURCE_REQUIREMENTS = {
     "student.resume_link": ("resume_link", "Resume Link"),
     "student.personal_email": ("personal_email", "Personal Email"),
@@ -1542,6 +1560,7 @@ def export_company(company_id: int):
     company = Company.query.get_or_404(company_id)
     applications = Application.query.filter_by(company_id=company.id).all()
     template = company.export_template()
+    extra_label_map = get_extra_field_label_map(company)
 
     if not template:
         template = [
@@ -1562,7 +1581,7 @@ def export_company(company_id: int):
             row[header] = resolve_source(source, app_entry)
         extra = json.loads(app_entry.extra_data or "{}")
         for k, v in extra.items():
-            row[k] = v
+            row[extra_label_map.get(k, k)] = v
 
         rows.append(row)
         app_entry.exported_at = datetime.utcnow()
@@ -1632,72 +1651,41 @@ def export_applicants():
         flash("Please select a company.")
         return redirect(url_for("applications"))
 
-    # 🔥 JOIN Student + Application
-    query = (
-        db.session.query(Student)
-        .join(Application, Student.id == Application.student_id)
-        .filter(Application.company_id == int(company_id))
-    )
-
-    # 🔹 Apply branch filter
+    company = Company.query.get_or_404(int(company_id))
+    extra_label_map = get_extra_field_label_map(company)
+    applications_query = Application.query.filter_by(company_id=company.id).join(Student)
     if branch != "ALL":
-        query = query.filter(Student.branch == branch)
+        applications_query = applications_query.filter(Student.branch == branch)
+    applications = applications_query.order_by(Student.roll_no).all()
 
-    students = query.order_by(Student.roll_no).all()
+    template = company.export_template()
+    if not template:
+        template = [
+            {"header": "Roll No", "source": "student.roll_no"},
+            {"header": "Name", "source": "student.name"},
+            {"header": "Branch", "source": "student.branch"},
+            {"header": "CGPA", "source": "student.cgpa"},
+            {"header": "Backlogs", "source": "student.backlogs"},
+            {"header": "Applied At", "source": "application.applied_at"},
+        ]
 
-
-        
-
-    # # 🔹 Build Excel
-    # rows = []
-    # for s in students:
-    #     app_entry = Application.query.filter_by(student_id=s.id, company_id=int(company_id)).first()
-    #     rows.append({
-    #         "Roll No": s.roll_no,
-    #         "Name": s.name,
-    #         "Branch": s.branch,
-    #         "Semester": s.current_semester,
-    #         "CGPA": s.cgpa,
-    #         "Active Backlogs": s.total_backlogs,
-    #         "Dead Backlogs": getattr(s, "dead_backlogs", 0),
-    #         "Eligibility": s.eligibility_status,
-            
-    #         "Resume Link": app_entry.resume_link if app_entry and app_entry.resume_link else s.resume_link or "",
-    #     })
-    # 🔹 Build Excel
     rows = []
-    for s in students:
-        app_entry = Application.query.filter_by(student_id=s.id, company_id=int(company_id)).first()
-        
-        # 1. Base student data
-        row_data = {
-            "Roll No": s.roll_no,
-            "Name": s.name,
-            "Branch": s.branch,
-            "Semester": s.current_semester,
-            "CGPA": s.cgpa,
-            "Active Backlogs": s.total_backlogs,
-            "Dead Backlogs": getattr(s, "dead_backlogs", 0),
-            "Eligibility": s.eligibility_status,
-            "Resume Link": app_entry.resume_link if app_entry and app_entry.resume_link else s.resume_link or "",
-        }
+    for app_entry in applications:
+        row = {}
+        for col in template:
+            header = col.get("header", "Unknown")
+            source = col.get("source", "")
+            row[header] = resolve_source(source, app_entry)
 
-        # 2. Dynamically add the custom company fields!
-        if app_entry and app_entry.extra_data:
-            import json # Ensure json is imported at the top of your file
-            try:
-                extra_fields = json.loads(app_entry.extra_data)
-                for key, value in extra_fields.items():
-                    # Clean up the key so "github_link" becomes "Github Link" in the Excel Header
-                    clean_header = key.replace('_', ' ').title()
-                    row_data[clean_header] = value
-            except Exception:
-                pass # Failsafe if the JSON is somehow corrupted
+        extra = json.loads(app_entry.extra_data or "{}")
+        for k, v in extra.items():
+            row[extra_label_map.get(k, k)] = v
 
-        rows.append(row_data)
+        rows.append(row)
+        app_entry.exported_at = datetime.utcnow()
 
+    db.session.commit()
     df = pd.DataFrame(rows)
-    # ... rest of the export code remains exactly the same ...
     
     output = io.BytesIO()
     with pd.ExcelWriter(output, engine="openpyxl") as writer:
@@ -1705,7 +1693,7 @@ def export_applicants():
 
     output.seek(0)
 
-    filename = f"applicants_{branch}_{datetime.utcnow().strftime('%Y%m%d%H%M%S')}.xlsx"
+    filename = f"applicants_{company.name.replace(' ', '_')}_{branch}_{datetime.utcnow().strftime('%Y%m%d%H%M%S')}.xlsx"
 
     return send_file(
         output,
