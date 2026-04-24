@@ -348,7 +348,8 @@ const companyData = {
         "min_cgpa": {{ c.min_cgpa or 0 }},
         "branches": {{ c.eligible_branches | tojson }},
         "allow_backlogs": {{ 'true' if c.allow_dead_backlogs else 'false' }},
-        "deadline": "{{ c.application_deadline.isoformat() if c.application_deadline else '' }}"
+         "deadline": "{{ (c.application_deadline | ist).replace(' ', 'T') if c.application_deadline else '' }}"
+
     },
     {% endfor %}
 };
