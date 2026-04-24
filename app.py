@@ -826,7 +826,7 @@ def resolve_source(source: str, application: Application):
         "company.name": application.company.name,
         "company.hiring_role": (application.company.hiring_role or "").strip(),
         "company.apply_link": (application.company.apply_link or "").strip(),
-        "company.application_deadline": application.company.application_deadline.strftime("%Y-%m-%d %H:%M") if application.company.application_deadline else "",
+        "company.application_deadline": to_ist(application.company.application_deadline).strftime("%Y-%m-%d %H:%M") if application.company.application_deadline else "",
         "resume.link": application.resume_link or student.resume_link or "",
         "resume.path": student.resume_link or "",
         "resume.filename": student.resume_link or "",
