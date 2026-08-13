@@ -86,7 +86,7 @@ ELIGIBILITY_STATUSES = {
 }
 SELECTION_POLICIES = {"BLOCKING", "NON_BLOCKING"}
 
-BRANCH_CHOICES = ["CSE", "CSE AI", "ECE", "ECE AI", "IT", "MAE", "AI ML", "DMAM"]
+BRANCH_CHOICES = ["CSE", "CSE AI", "ECE", "ECE AI", "IT", "MAE", "AI ML", "DMAM", "MCA-IT" , "MTech-VLSI", "MTech-CSEAI" , "MTech-IT", "MTech-AI&DS"]
 
 import pytz
 
