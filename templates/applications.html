@@ -26,9 +26,9 @@
     .section-header { color: #a7c7c7; margin-top: 0; margin-bottom: 25px; font-size: 1.3rem; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid rgba(167, 199, 199, 0.1); padding-bottom: 15px; }
     .admin-header { color: #cbd5e1; margin-top: 0; margin-bottom: 20px; font-size: 1.2rem; }
     
-    .app-card { background: rgba(20, 25, 35, 0.6); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 8px; padding: 20px 25px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px; }
+    .app-card { background: rgba(20, 25, 35, 0.6); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 8px; padding: 20px 25px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; }
     
-    .modal-content { background: #1e293b; padding: 40px; border-radius: 16px; width: 90%; max-width: 600px; max-height: 90vh; overflow-y: auto; color: #e2e8f0; border: 1px solid rgba(100, 180, 180, 0.2); box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); }
+    .modal-content { background: #1e293b; padding: 40px; border-radius: 16px; width: 90%; max-width: 600px; max-height: 90vh; overflow-y: auto; color: #e2e8f0; border: 1px solid rgba(100, 180, 180, 0.3); }
     .modal-footer { margin-top: 35px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; }
     .modal-btn-group { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
 
@@ -74,13 +74,14 @@
             {% if g.user.role != "STUDENT" %}
                 <div style="margin-bottom: 20px;">
                     <label style="display: block; color: #9ca3af; font-size: 0.95rem; margin-bottom: 8px;">Select Student (Admin Override)</label>
-                    <select name="student_id" id="student-select" required onchange="filterEligibleCompanies()" style="width: 100%; padding: 12px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; color: #e2e8f0; font-size: 1rem; outline: none;">
+                    <select name="student_id" id="student-select" required onchange="filterEligibleCompanies()" style="width: 100%; padding: 12px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; color: #e2e8f0;">
                         <option value="">-- Select Student --</option>
                         {% for s in students %}
                         <option value="{{ s.id }}" 
                                 data-cgpa="{{ s.cgpa }}" 
                                 data-branch="{{ s.branch }}" 
-                                data-backlogs="{{ s.active_backlogs }}">
+                                data-active-backlogs="{{ s.total_backlogs - s.dead_backlogs }}"
+                                data-dead-backlogs="{{ s.dead_backlogs }}">
                             {{ s.roll_no }} - {{ s.name }}
                         </option>
                         {% endfor %}
@@ -91,14 +92,15 @@
                 {% if students %}
                     <input type="hidden" id="current-student-cgpa" value="{{ students[0].cgpa }}">
                     <input type="hidden" id="current-student-branch" value="{{ students[0].branch }}">
-                    <input type="hidden" id="current-student-backlogs" value="{{ students[0].active_backlogs }}">
+                    <input type="hidden" id="current-student-active-backlogs" value="{{ students[0].total_backlogs - students[0].dead_backlogs }}">
+                    <input type="hidden" id="current-student-dead-backlogs" value="{{ students[0].dead_backlogs }}">
                 {% endif %}
             {% endif %}
             
             {# --- COMPANY DROPDOWN --- #}
             <div style="margin-bottom: 20px;">
                 <label style="display: block; color: #9ca3af; font-size: 0.95rem; margin-bottom: 8px;">Company & Role</label>
-                <select name="company_id" id="company-select" required style="width: 100%; padding: 14px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; color: #e2e8f0; font-size: 1.05rem; outline: none; cursor: pointer;">
+                <select name="company_id" id="company-select" required style="width: 100%; padding: 14px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; color: #e2e8f0;">
                     <option value="">-- Select Eligible Company --</option>
                     {% for c in companies %}
                     <option value="{{ c.id }}">{{ c.name }} | {{ c.hiring_role or 'Role not specified' }}</option>
@@ -111,7 +113,7 @@
             <div id="company-apply-link-container" style="margin: 15px 0 25px 0; padding: 12px; background: rgba(56, 189, 248, 0.1); border: 1px solid rgba(56, 189, 248, 0.3); border-radius: 8px; display: none;">
                 <p style="margin: 0; font-size: 0.95rem; color: #e2e8f0; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
                     <span><strong>External Link Required:</strong> You must also apply on the company portal.</span>
-                    <a id="company-apply-link" href="#" target="_blank" rel="noopener noreferrer" style="color: #38bdf8; font-weight: bold; text-decoration: none; padding: 6px 12px; background: rgba(56, 189, 248, 0.15); border-radius: 4px; display: inline-block; text-align: center;">Visit Portal ↗</a>
+                    <a id="company-apply-link" href="#" target="_blank" rel="noopener noreferrer" style="color: #38bdf8; font-weight: bold; text-decoration: none; padding: 6px 12px; background: rgba(56, 189, 248, 0.2); border-radius: 6px;">Visit Career Page ↗</a>
                 </p>
             </div>
 
@@ -119,7 +121,7 @@
             <div id="dynamic-fields" style="display: flex; flex-direction: column; gap: 15px; margin-bottom: 25px;">
                 </div>
 
-            <button type="submit" style="width: 100%; background: linear-gradient(135deg, #0d9488, #2563eb); color: white; border: none; padding: 16px; border-radius: 8px; font-size: 1.1rem; font-weight: 500; cursor: pointer; box-shadow: 0 4px 15px rgba(13, 148, 136, 0.3); transition: transform 0.2s;">
+            <button type="submit" style="width: 100%; background: linear-gradient(135deg, #0d9488, #2563eb); color: white; border: none; padding: 16px; border-radius: 8px; font-size: 1.1rem; font-weight: 600; cursor: pointer; transition: all 0.3s;">
                 Submit Application
             </button>
         </form>
@@ -181,16 +183,16 @@
                         {{ a.applied_at | ist }}
                     </div>
 
-                    <span style="background: rgba(245, 158, 11, 0.1); color: #f59e0b; padding: 6px 14px; border-radius: 20px; font-size: 0.85rem; border: 1px solid rgba(245, 158, 11, 0.2); text-align: center; min-width: 130px; display: inline-block;">
+                    <span style="background: rgba(245, 158, 11, 0.1); color: #f59e0b; padding: 6px 14px; border-radius: 20px; font-size: 0.85rem; border: 1px solid rgba(245, 158, 11, 0.2); text-align: center;">
                         {{ a.status }}
                     </span>
 
-                    <button type="button" onclick="document.getElementById('modal-{{ a.id }}').style.display='flex'" style="background: transparent; color: #e2e8f0; border: 1px solid rgba(255, 255, 255, 0.25); padding: 8px 16px; border-radius: 6px; font-size: 0.95rem; cursor: pointer; transition: background 0.2s;">
+                    <button type="button" onclick="document.getElementById('modal-{{ a.id }}').style.display='flex'" style="background: transparent; color: #e2e8f0; border: 1px solid rgba(255, 255, 255, 0.2); padding: 8px 16px; border-radius: 6px; cursor: pointer; transition: all 0.2s;">
                         Details
                     </button>
                 </div>
 
-                <div id="modal-{{ a.id }}" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(8px); z-index: 1000; align-items: center; justify-content: center; padding: 10px; box-sizing: border-box;">
+                <div id="modal-{{ a.id }}" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(8px); z-index: 1000; align-items: center; justify-content: center;">
                     <div class="modal-content">
                         
                         <div style="border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 20px; margin-bottom: 25px;">
@@ -209,7 +211,7 @@
                         
                         <h4 style="color: #a7c7c7; margin-top: 0; margin-bottom: 15px; font-size: 1.1rem; text-transform: uppercase; letter-spacing: 1px;">Application Info</h4>
                         
-                        <div style="display: flex; flex-direction: column; gap: 0; font-size: 0.95rem; background: rgba(0,0,0,0.2); border-radius: 8px; border: 1px solid rgba(255,255,255,0.05); padding: 10px 15px;">
+                        <div style="display: flex; flex-direction: column; gap: 0; font-size: 0.95rem; background: rgba(0,0,0,0.2); border-radius: 8px; border: 1px solid rgba(255,255,255,0.05); padding: 20px;">
                             
                             <div style="display: flex; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.05); padding: 12px 0; flex-wrap: wrap; gap: 5px;">
                                 <strong style="color:#9ca3af;">Student:</strong> <span style="text-align: right;">{{ a.student.roll_no }} - {{ a.student.name }}</span>
@@ -222,7 +224,7 @@
                             </div>
                             {% set template_sources = a.company.export_template() | map(attribute='source') | list %}
                             {% if "student.resume_link" in template_sources %}
-                                <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.05); padding: 12px 0; flex-wrap: wrap; gap: 5px;">
+                                <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.05); padding: 12px 0; flex-wrap: wrap; gap: 10px;">
                                     <strong style="color:#9ca3af;">Resume:</strong> 
                                     {% if a.resume_link %}
                                     <a href="{{ a.resume_link }}" target="_blank" style="color: #38bdf8; text-decoration: none; word-break: break-all; text-align: right;">View Document ↗</a>
@@ -288,38 +290,38 @@
                             {% if g.user.role == "STUDENT" %}
                                 {% set deadline_passed = a.company.application_deadline and now_utc > a.company.application_deadline %}
                                 {% if not deadline_passed %}
-                                    <a href="{{ url_for('edit_application', application_id=a.id) }}" style="height: 42px; padding: 0 20px; display: inline-flex; align-items: center; justify-content: center; background: rgba(56, 189, 248, 0.1); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.3); border-radius: 6px; text-decoration: none; font-weight: 600; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px; transition: all 0.2s; width: 100%; box-sizing: border-box;" onmouseover="this.style.background='#38bdf8'; this.style.color='#fff';" onmouseout="this.style.background='rgba(56, 189, 248, 0.1)'; this.style.color='#38bdf8';">
+                                    <a href="{{ url_for('edit_application', application_id=a.id) }}" style="height: 42px; padding: 0 20px; display: inline-flex; align-items: center; justify-content: center; background: rgba(59, 130, 246, 0.1); color: #3b82f6; border: 1px solid rgba(59, 130, 246, 0.3); border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px; transition: all 0.2s; text-decoration: none;">
                                         Edit
                                     </a>
 
                                     <form action="{{ url_for('delete_application', application_id=a.id) }}" method="post" style="margin: 0; width: 100%;">
-                                        <button type="submit" style="height: 42px; padding: 0 20px; display: inline-flex; align-items: center; justify-content: center; background: transparent; color: #ef4444; border: 1px solid #ef4444; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px; transition: all 0.2s; width: 100%; box-sizing: border-box;" onmouseover="this.style.background='#ef4444'; this.style.color='#fff';" onmouseout="this.style.background='transparent'; this.style.color='#ef4444';" onclick="return confirm('Are you sure you want to withdraw this application?')">
+                                        <button type="submit" style="height: 42px; padding: 0 20px; display: inline-flex; align-items: center; justify-content: center; background: rgba(239, 68, 68, 0.1); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px; transition: all 0.2s; width: 100%; box-sizing: border-box;">
                                             Withdraw
                                         </button>
                                     </form>
                                 {% else %}
-                                    <div style="grid-column: span 2; height: 42px; display: inline-flex; align-items: center; justify-content: center; background: rgba(100, 116, 139, 0.2); color: #94a3b8; border: 1px solid rgba(148, 163, 184, 0.3); border-radius: 6px; font-weight: 600; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.5px;">
+                                    <div style="grid-column: span 2; height: 42px; display: inline-flex; align-items: center; justify-content: center; background: rgba(100, 116, 139, 0.2); color: #94a3b8; border-radius: 6px; font-weight: 600; font-size: 0.85rem;">
                                         Deadline Passed - Edit/Withdraw Locked
                                     </div>
                                 {% endif %}
                             {% endif %}
 
                             {% if g.user.role in ["ADMIN", "PLACEMENT_COORDINATOR"] %}
-                                <form action="{{ url_for('update_application_status', application_id=a.id) }}" method="post" style="display: flex; gap: 10px; align-items: center; margin: 0; width: 100%; grid-column: span 2;">
-                                    <select name="status" required style="height: 42px; padding: 0 10px; background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: #fff; outline: none; font-size: 0.85rem; flex: 1; box-sizing: border-box;">
+                                <form action="{{ url_for('update_application_status', application_id=a.id) }}" method="post" style="display: flex; gap: 10px; align-items: center; margin: 0; width: 100%; box-sizing: border-box;">
+                                    <select name="status" required style="height: 42px; padding: 0 10px; background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: #e2e8f0; flex: 1;">
                                         <option value="APPLIED" {% if a.status == "APPLIED" %}selected{% endif %}>APPLIED</option>
                                         <option value="SHORTLISTED" {% if a.status == "SHORTLISTED" %}selected{% endif %}>SHORTLISTED</option>
                                         <option value="INTERVIEW" {% if a.status == "INTERVIEW" %}selected{% endif %}>INTERVIEW</option>
                                         <option value="SELECTED" {% if a.status == "SELECTED" %}selected{% endif %}>SELECTED</option>
                                         <option value="REJECTED" {% if a.status == "REJECTED" %}selected{% endif %}>REJECTED</option>
                                     </select>
-                                    <button type="submit" style="height: 42px; padding: 0 20px; display: inline-flex; align-items: center; justify-content: center; background: transparent; color: #10b981; border: 1px solid #10b981; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px; transition: all 0.2s; flex: 1; box-sizing: border-box;" onmouseover="this.style.background='#10b981'; this.style.color='#fff';" onmouseout="this.style.background='transparent'; this.style.color='#10b981';">
+                                    <button type="submit" style="height: 42px; padding: 0 20px; display: inline-flex; align-items: center; justify-content: center; background: rgba(16, 185, 129, 0.1); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px; transition: all 0.2s;">
                                         Save Status
                                     </button>
                                 </form>
                             {% endif %}
 
-                            <button onclick="document.getElementById('modal-{{ a.id }}').style.display='none'" style="grid-column: span 2; height: 42px; padding: 0 20px; display: inline-flex; align-items: center; justify-content: center; background: rgba(148, 163, 184, 0.1); color: #cbd5e1; border: 1px solid rgba(148, 163, 184, 0.3); border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px; transition: all 0.2s; width: 100%; box-sizing: border-box;" onmouseover="this.style.background='#64748b'; this.style.color='#fff';" onmouseout="this.style.background='rgba(148, 163, 184, 0.1)'; this.style.color='#cbd5e1';">
+                            <button onclick="document.getElementById('modal-{{ a.id }}').style.display='none'" style="grid-column: span 2; height: 42px; padding: 0 20px; display: inline-flex; align-items: center; justify-content: center; background: rgba(148, 163, 184, 0.1); color: #cbd5e1; border: 1px solid rgba(148, 163, 184, 0.3); border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px; transition: all 0.2s; width: 100%; box-sizing: border-box;">
                                 Close Window
                             </button>
 
@@ -346,9 +348,10 @@ const companyData = {
         "role": "{{ c.hiring_role or '' }}",
         "link": "{{ c.apply_link or '' }}",
         "min_cgpa": {{ c.min_cgpa or 0 }},
+        "max_backlogs": {{ c.max_backlogs or 999 }},
         "branches": {{ c.eligible_branches | tojson }},
-        "allow_backlogs": {{ 'true' if c.allow_dead_backlogs else 'false' }},
-         "deadline": "{{ (c.application_deadline | ist).replace(' ', 'T') if c.application_deadline else '' }}"
+        "allow_dead_backlogs": {{ 'true' if c.allow_dead_backlogs else 'false' }},
+        "deadline": "{{ (c.application_deadline | ist).replace(' ', 'T') if c.application_deadline else '' }}"
 
     },
     {% endfor %}
@@ -361,20 +364,22 @@ function filterEligibleCompanies() {
     const studentSelect = document.getElementById("student-select");
     const now = new Date();
     
-    let sCgpa, sBranch, sBacklogs;
+    let sCgpa, sBranch, sActiveBacklogs, sDeadBacklogs;
 
     if (studentSelect) {
         const selectedOpt = studentSelect.options[studentSelect.selectedIndex];
         if (!selectedOpt || !selectedOpt.value) return;
         sCgpa = parseFloat(selectedOpt.dataset.cgpa);
         sBranch = selectedOpt.dataset.branch;
-        sBacklogs = parseInt(selectedOpt.dataset.backlogs);
+        sActiveBacklogs = parseInt(selectedOpt.dataset.activeBacklogs);
+        sDeadBacklogs = parseInt(selectedOpt.dataset.deadBacklogs);
     } else {
         const cgpaEl = document.getElementById("current-student-cgpa");
         if (!cgpaEl) return;
         sCgpa = parseFloat(cgpaEl.value);
         sBranch = document.getElementById("current-student-branch").value;
-        sBacklogs = parseInt(document.getElementById("current-student-backlogs").value);
+        sActiveBacklogs = parseInt(document.getElementById("current-student-active-backlogs").value);
+        sDeadBacklogs = parseInt(document.getElementById("current-student-dead-backlogs").value);
     }
 
     companySelect.innerHTML = '<option value="">-- Select Eligible Company --</option>';
@@ -383,7 +388,12 @@ function filterEligibleCompanies() {
         const c = companyData[id];
         const isCgpaEligible = sCgpa >= c.min_cgpa;
         const isBranchEligible = c.branches.includes("ALL") || c.branches.includes(sBranch);
-        const isBacklogEligible = c.allow_backlogs ? true : (sBacklogs === 0);
+        
+        // Check active backlogs against max_backlogs limit
+        const isActiveBacklogEligible = sActiveBacklogs <= c.max_backlogs;
+        
+        // Check dead backlogs: if company doesn't allow them, student must have 0 dead backlogs
+        const isDeadBacklogEligible = c.allow_dead_backlogs ? true : (sDeadBacklogs === 0);
         
         let isExpired = false;
         if (c.deadline) {
@@ -391,7 +401,8 @@ function filterEligibleCompanies() {
             if (now > deadlineDate) isExpired = true;
         }
 
-        if (isCgpaEligible && isBranchEligible && isBacklogEligible && !isExpired) {
+        // ALL conditions must pass for company to be eligible
+        if (isCgpaEligible && isBranchEligible && isActiveBacklogEligible && isDeadBacklogEligible && !isExpired) {
             const opt = document.createElement("option");
             opt.value = id;
             const roleStr = c.role ? ` | ${c.role}` : ""; 
