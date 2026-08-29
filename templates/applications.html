@@ -80,7 +80,8 @@
                         <option value="{{ s.id }}" 
                                 data-cgpa="{{ s.cgpa }}" 
                                 data-branch="{{ s.branch }}" 
-                                data-backlogs="{{ s.active_backlogs }}">
+                                data-backlogs="{{ s.total_backlogs }}"
+                                data-dead-backlogs="{{ s.dead_backlogs or 0 }}">
                             {{ s.roll_no }} - {{ s.name }}
                         </option>
                         {% endfor %}
@@ -91,7 +92,8 @@
                 {% if students %}
                     <input type="hidden" id="current-student-cgpa" value="{{ students[0].cgpa }}">
                     <input type="hidden" id="current-student-branch" value="{{ students[0].branch }}">
-                    <input type="hidden" id="current-student-backlogs" value="{{ students[0].active_backlogs }}">
+                    <input type="hidden" id="current-student-backlogs" value="{{ students[0].total_backlogs }}">
+                    <input type="hidden" id="current-student-dead-backlogs" value="{{ students[0].dead_backlogs or 0 }}">
                 {% endif %}
             {% endif %}
             
@@ -347,9 +349,9 @@ const companyData = {
         "link": "{{ c.apply_link or '' }}",
         "min_cgpa": {{ c.min_cgpa or 0 }},
         "branches": {{ c.eligible_branches | tojson }},
-        "allow_backlogs": {{ 'true' if c.allow_dead_backlogs else 'false' }},
-         "deadline": "{{ (c.application_deadline | ist).replace(' ', 'T') if c.application_deadline else '' }}"
-
+        "max_backlogs": {{ c.max_backlogs or 0 }},
+        "allow_dead_backlogs": {{ 'true' if c.allow_dead_backlogs else 'false' }},
+        "deadline": "{{ (c.application_deadline | ist).replace(' ', 'T') if c.application_deadline else '' }}"
     },
     {% endfor %}
 };
@@ -361,20 +363,22 @@ function filterEligibleCompanies() {
     const studentSelect = document.getElementById("student-select");
     const now = new Date();
     
-    let sCgpa, sBranch, sBacklogs;
+    let sCgpa, sBranch, sBacklogs, sDeadBacklogs;
 
     if (studentSelect) {
         const selectedOpt = studentSelect.options[studentSelect.selectedIndex];
         if (!selectedOpt || !selectedOpt.value) return;
         sCgpa = parseFloat(selectedOpt.dataset.cgpa);
         sBranch = selectedOpt.dataset.branch;
-        sBacklogs = parseInt(selectedOpt.dataset.backlogs);
+        sBacklogs = parseInt(selectedOpt.dataset.backlogs) || 0;
+        sDeadBacklogs = parseInt(selectedOpt.dataset.deadBacklogs) || 0;
     } else {
         const cgpaEl = document.getElementById("current-student-cgpa");
         if (!cgpaEl) return;
         sCgpa = parseFloat(cgpaEl.value);
         sBranch = document.getElementById("current-student-branch").value;
-        sBacklogs = parseInt(document.getElementById("current-student-backlogs").value);
+        sBacklogs = parseInt(document.getElementById("current-student-backlogs").value) || 0;
+        sDeadBacklogs = parseInt(document.getElementById("current-student-dead-backlogs").value) || 0;
     }
 
     companySelect.innerHTML = '<option value="">-- Select Eligible Company --</option>';
@@ -383,7 +387,8 @@ function filterEligibleCompanies() {
         const c = companyData[id];
         const isCgpaEligible = sCgpa >= c.min_cgpa;
         const isBranchEligible = c.branches.includes("ALL") || c.branches.includes(sBranch);
-        const isBacklogEligible = c.allow_backlogs ? true : (sBacklogs === 0);
+        const isBacklogEligible = sBacklogs <= c.max_backlogs;
+        const isDeadBacklogEligible = c.allow_dead_backlogs ? true : (sDeadBacklogs === 0);
         
         let isExpired = false;
         if (c.deadline) {
@@ -391,7 +396,7 @@ function filterEligibleCompanies() {
             if (now > deadlineDate) isExpired = true;
         }
 
-        if (isCgpaEligible && isBranchEligible && isBacklogEligible && !isExpired) {
+        if (isCgpaEligible && isBranchEligible && isBacklogEligible && isDeadBacklogEligible && !isExpired) {
             const opt = document.createElement("option");
             opt.value = id;
             const roleStr = c.role ? ` | ${c.role}` : ""; 
