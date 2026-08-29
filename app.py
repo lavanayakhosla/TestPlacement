@@ -775,8 +775,9 @@ def allowed_for_company(student: Student, company: Company):
         return False, f"Backlogs {student.total_backlogs} exceed max {company.max_backlogs}"
    
     # NEW DEAD BACKLOG CHECK
-    if not company.allow_dead_backlogs and student.dead_backlogs > 0:
+    if not company.allow_dead_backlogs and (student.dead_backlogs or 0) > 0:
         return False, "Dead backlogs are not allowed for this company"
+   
 
     return True, "Eligible"
     
