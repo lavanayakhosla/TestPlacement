@@ -434,7 +434,9 @@ def calculate_cgpa(student: Student) -> float:
     total_credits = sum(r.semester_credits for r in usable)
     if total_credits <= 0:
         return 0.0
-    return round(weighted_sum / total_credits, 2)
+    val = weighted_sum / total_credits
+    s = f"{val:.5f}"
+    return float(s[:s.index('.') + 3])
 
 
 def calculate_backlog(student: Student) -> int:
