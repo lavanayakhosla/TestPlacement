@@ -1691,6 +1691,11 @@ def export_applicants():
             {"header": "Backlogs", "source": "student.backlogs"},
             {"header": "Applied At", "source": "application.applied_at"},
         ]
+    mapped_extra_keys = set()
+    for col in template:
+        source = col.get("source", "")
+        if source.startswith("extra."):
+            mapped_extra_keys.add(source[6:])
 
     rows = []
     for app_entry in applications:
@@ -1702,7 +1707,8 @@ def export_applicants():
 
         extra = json.loads(app_entry.extra_data or "{}")
         for k, v in extra.items():
-            row[extra_label_map.get(k, k)] = v
+            if k not in mapped_extra_keys:
+                row[extra_label_map.get(k, k)] = v
 
         rows.append(row)
         app_entry.exported_at = datetime.utcnow()
