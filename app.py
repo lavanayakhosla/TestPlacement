@@ -807,6 +807,13 @@ def recompute_blocking_status(student: Student):
 
 
 def resolve_source(source: str, application: Application):
+    if source.startswith("extra."):
+        extra_key = source[6:]
+        try:
+            extra = json.loads(application.extra_data or "{}")
+        except:
+            extra = {}
+        return extra.get(extra_key, "")
     student = application.student
     mapping = {
         "student.roll_no": student.roll_no,
@@ -1572,7 +1579,15 @@ def export_company(company_id: int):
             {"header": "Backlogs", "source": "student.backlogs"},
             {"header": "Applied At", "source": "application.applied_at"},
         ]
+    mapped_extra_keys = set()
+    for col in template:
+        source = col.get("source", "")
+        if source.startswith("extra."):
+            mapped_extra_keys.add(source[6:])
 
+
+
+    
     rows = []
     for app_entry in applications:
         row = {}
@@ -1580,9 +1595,16 @@ def export_company(company_id: int):
             header = col.get("header", "Unknown")
             source = col.get("source", "")
             row[header] = resolve_source(source, app_entry)
-        extra = json.loads(app_entry.extra_data or "{}")
+            
+        try:
+            extra = json.loads(app_entry.extra_data or "{}")
+        except:
+            extra = {}
+       
         for k, v in extra.items():
-            row[extra_label_map.get(k, k)] = v
+            if k not in mapped_extra_keys:
+                row[extra_label_map.get(k, k)] = v
+            
 
         rows.append(row)
         app_entry.exported_at = datetime.utcnow()
