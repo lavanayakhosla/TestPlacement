@@ -1018,45 +1018,10 @@ def dashboard():
         applications=display_applications  # <-- NEW: Pass the list to the HTML
     )
 
-@app.route("/students", methods=["GET", "POST"])
+@app.route("/students", methods=["GET"])
 @role_required("ADMIN", "PLACEMENT_COORDINATOR")
 def students():
-    if request.method == "POST":
-        eligibility_status = request.form.get("eligibility_status", "ELIGIBLE").strip().upper()
-        if eligibility_status not in ELIGIBILITY_STATUSES:
-            flash("Invalid eligibility status.")
-            return redirect(url_for("students"))
-        try:
-            tenth_percentage = _parse_optional_percentage(
-                request.form.get("tenth_percentage", ""), "10th Percentage"
-            )
-            twelfth_percentage = _parse_optional_percentage(
-                request.form.get("twelfth_percentage", ""), "12th Percentage"
-            )
-        except ValueError as exc:
-            flash(str(exc))
-            return redirect(url_for("students"))
 
-        student = Student(
-            roll_no=request.form["roll_no"].strip().upper(),
-            name=request.form["name"].strip(),
-            branch=request.form["branch"].strip().upper(),
-             cgpa=float(request.form.get("cgpa", "0")), 
-            is_lateral_entry=request.form.get("is_lateral_entry") == "on",
-            current_semester=int(request.form.get("current_semester", "1")),
-            resume_link=request.form.get("resume_link", "").strip() or None,
-            personal_email=request.form.get("personal_email", "").strip() or None,
-            college_email=request.form.get("college_email", "").strip() or None,
-            mobile_number=request.form.get("mobile_number", "").strip() or None,
-            tenth_percentage=tenth_percentage,
-            twelfth_percentage=twelfth_percentage,
-            eligibility_status=eligibility_status,
-            block_reason=request.form.get("block_reason", "").strip() or None,
-        )
-        db.session.add(student)
-        db.session.commit()
-        flash("Student added.")
-        return redirect(url_for("students"))
     records = Student.query.order_by(Student.branch, Student.roll_no).all()
     return render_template("students.html", students=records)
 
