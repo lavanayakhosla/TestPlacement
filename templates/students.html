@@ -2,43 +2,7 @@
 {% block content %}
 <h1>Students</h1>
 <div class="grid grid-2">
-  <div class="card">
-    <h3>Add Student</h3>
-    <form method="post">
-      <input name="roll_no" placeholder="Roll No" required>
-      <input name="name" placeholder="Full Name" required>
-      <label>Branch</label>
-      <select name="branch" required>
-        <option value="">Select branch</option>
-        {% for b in branch_choices %}<option value="{{ b }}">{{ b }}</option>{% endfor %}
-      </select>
-      <label>Current semester</label>
-      <select name="current_semester" required>
-        <option value="">Select semester</option>
-        {% for s in range(1, 9) %}<option value="{{ s }}">{{ s }}</option>{% endfor %}
-      </select>
-      <input type="number" step="0.01" name="cgpa" placeholder="CGPA" />
-      <input name="resume_link" placeholder="Resume Link (Drive/Dropbox URL)">
-      <input type="email" name="personal_email" placeholder="Personal Email">
-      <input type="email" name="college_email" placeholder="College Email">
-      <input name="mobile_number" placeholder="Mobile Number">
-      <input type="number" step="0.01" min="0" max="100" name="tenth_percentage" placeholder="10th Percentage">
-      <input type="number" step="0.01" min="0" max="100" name="twelfth_percentage" placeholder="12th Percentage">
-     
-      <label>Eligibility Status</label>
-      <select name="eligibility_status">
-        <option value="ELIGIBLE">ELIGIBLE</option>
-        <option value="EXTERNAL_INTERN">EXTERNAL_INTERN</option>
-        <option value="CAMPUS_INTERN">CAMPUS_INTERN</option>
-        <option value="EXTERNAL_PLACED">EXTERNAL_PLACED</option>
-        <option value="BLOCKED_BY_POLICY">BLOCKED_BY_POLICY</option>
-      </select>
-      <input name="block_reason" placeholder="Block note (optional)">
-      <label><input type="checkbox" name="is_lateral_entry"> Lateral Entry (starts from semester 3)</label>
-      <button type="submit">Add Student</button>
-    </form>
-  </div>
-  <div class="card">
+    <div class="card">
     <h3>Resume Link Mode</h3>
     <p>Store resume as URL (Google Drive/OneDrive/etc). Export will include this link per student.</p>
   </div>
